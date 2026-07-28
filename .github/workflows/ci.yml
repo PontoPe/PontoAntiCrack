@@ -1,0 +1,66 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  detections:
+    name: detection tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements-dev.txt
+
+      - name: lint
+        run: |
+          ruff check .
+          mypy remediations/ notifier/
+
+      - name: unit tests — event patterns + remediation handlers
+        run: pytest tests/ -v --tb=short
+
+      # Every detection must have: a pattern, a handler, and a test that
+      # asserts both the match and the remediation action.
+      - name: coverage guard — no untested detection
+        run: ./scripts/check-detection-coverage.sh
+
+  infra:
+    name: terraform static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform -chdir=infra fmt -check -recursive
+      - uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: infra
+      - uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infra
+          quiet: true
+
+  # Live attack validation runs on a schedule against the isolated lab account,
+  # never on pull_request from a fork.
+  live-validation:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: stratus red team validation
+    runs-on: ubuntu-latest
+    environment: lab            # manual approval gate
+    steps:
+      - uses: actions/checkout@v4
+      # - uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: arn:aws:iam::<lab-account>:role/gha-attack-sim
+      #     aws-region: sa-east-1
+      - run: echo "TODO: stratus detonate + assert + cleanup"
