@@ -1,4 +1,6 @@
-# Sentinel Response
+# PAC — Ponto Anti-Crack
+
+Anti-cheat for cloud accounts. Same idea as VAC: the game keeps running, the cheater gets caught and kicked automatically.
 
 Detection-as-code and automated remediation for AWS: CloudTrail → EventBridge → Lambda, with detections written as tested code and validated by running real attack techniques against the account.
 
@@ -87,7 +89,7 @@ docs/                 # architecture, threat model, MITRE mapping, results
 
 ## Roadmap
 
-- [ ] `infra/` — CloudTrail + EventBridge + Lambda skeleton in Terraform (reuses [AegisLandingZone](../AegisLandingZone) accounts)
+- [ ] `infra/` — CloudTrail + EventBridge + Lambda skeleton in Terraform (reuses [AwLZ](../AwLZ) accounts)
 - [ ] `s3-public` detection + remediation + tests
 - [ ] `iam-key-leak` detection + remediation + tests
 - [ ] `sg-open` detection + remediation + tests

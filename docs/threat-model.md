@@ -1,4 +1,4 @@
-# Threat model — Sentinel Response
+# Threat model — Ponto Anti-Crack
 
 ## Scope
 
@@ -26,8 +26,8 @@ The detection and response pipeline itself: CloudTrail → EventBridge → Lambd
 | # | Threat | Likelihood | Impact | Control | Residual risk |
 |---|--------|-----------|--------|---------|---------------|
 | R1 | Remediation role over-privileged → used as an escalation path | Med | High | One role per detection, scoped to exact actions + resource conditions; no `iam:*`, no `PassRole` | Needs review each time a remediation grows |
-| R2 | Attacker weaponizes auto-remediation as DoS (mass-revoking prod SGs) | Med | High | Dry-run mode default in non-prod, tag-based exclusion (`sentinel:exclude`), per-detection rate limit and circuit breaker | A determined attacker can still generate noise |
-| R3 | Detection path disabled (rule deleted, Lambda unwired) | Med | High | SCP protects `sentinel-*` resources (from [AegisLandingZone](../../AegisLandingZone)); heartbeat canary event every 15 min with a dead-man's-switch alarm | — |
+| R2 | Attacker weaponizes auto-remediation as DoS (mass-revoking prod SGs) | Med | High | Dry-run mode default in non-prod, tag-based exclusion (`pac:exclude`), per-detection rate limit and circuit breaker | A determined attacker can still generate noise |
+| R3 | Detection path disabled (rule deleted, Lambda unwired) | Med | High | SCP protects `pac-*` resources (from [AwLZ](../../AwLZ)); heartbeat canary event every 15 min with a dead-man's-switch alarm | — |
 | R4 | Event schema drift → detection stops matching, silently | High | High | Fixture-based unit tests in CI using recorded CloudTrail events; coverage guard blocks untested detections | Fixtures age; refresh them from live captures |
 | R5 | Slack webhook leaked | Low | Med | Stored in Secrets Manager, never in env vars or code; alerts carry no credential material | — |
 | R6 | Remediation destroys evidence needed for IR | Med | High | Original resource state snapshotted to the audit table *before* any change; remediations are reversible | Some actions (key deactivation) are semi-destructive by design — deliberate |
@@ -48,5 +48,5 @@ A detection is not considered done until: unit test passes on a recorded event f
 
 ## Assumptions
 
-- Org trail is already delivering to the security account (AegisLandingZone).
+- Org trail is already delivering to the security account (AwLZ).
 - The lab account is isolated, budget-capped, and contains no real data.

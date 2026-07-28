@@ -1,4 +1,4 @@
-# Architecture — Sentinel Response
+# Architecture — Ponto Anti-Crack
 
 The high-level diagram lives in the [README](../README.md). This file records **why**, not what.
 
