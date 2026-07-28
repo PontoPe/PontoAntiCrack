@@ -15,7 +15,7 @@ test: ## unit tests — fixtures + moto, no AWS account needed
 lint: ## ruff + mypy + terraform static analysis
 	ruff check .
 	mypy remediations/ notifier/
-	cd infra && terraform fmt -check -recursive && tfsec . && checkov -d . --quiet
+	cd infra && terraform fmt -check -recursive && trivy config . --severity HIGH,CRITICAL --exit-code 1 && checkov -d . --quiet
 
 deploy: ## deploy detections + remediations
 	cd infra && terraform init && terraform apply

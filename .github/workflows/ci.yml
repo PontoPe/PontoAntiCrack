@@ -42,9 +42,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
       - run: terraform -chdir=infra fmt -check -recursive
-      - uses: aquasecurity/tfsec-action@v1.0.3
+      # tfsec is EOL — folded into Trivy's `config` scanner
+      - uses: aquasecurity/trivy-action@0.28.0
         with:
-          working_directory: infra
+          scan-type: config
+          scan-ref: infra
+          severity: HIGH,CRITICAL
+          exit-code: "1"
       - uses: bridgecrewio/checkov-action@master
         with:
           directory: infra
