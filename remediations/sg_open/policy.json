@@ -1,0 +1,37 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InspectSecurityGroups",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DescribeSecurityGroupRules",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeTags"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "RevokeWorldOpenIngress",
+      "Effect": "Allow",
+      "Action": ["ec2:RevokeSecurityGroupIngress"],
+      "Resource": "arn:${partition}:ec2:${region}:${account_id}:security-group/*"
+    },
+    {
+      "Sid": "NeverWidenAccessOrDestroyGroups",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:AuthorizeSecurityGroupEgress",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:CreateSecurityGroup",
+        "ec2:DeleteSecurityGroup",
+        "ec2:ModifyNetworkInterfaceAttribute",
+        "ec2:ModifySecurityGroupRules",
+        "ec2:RevokeSecurityGroupEgress",
+        "ec2:RunInstances"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

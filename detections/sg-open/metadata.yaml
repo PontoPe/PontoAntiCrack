@@ -1,0 +1,34 @@
+id: sg-open
+name: Security group ingress open to the internet
+package: sg_open
+severity: high
+event_source: cloudtrail
+description: >-
+  An ingress rule was authorised with a source of 0.0.0.0/0 or ::/0. The pattern
+  matches any world-open ingress; the handler revokes only the rules that expose
+  a sensitive port, so opening 443 to the world is matched and then deliberately
+  left alone.
+attack:
+  - id: T1190
+    name: Exploit Public-Facing Application
+  - id: T1021
+    name: Remote Services
+    note: Applies to 22/3389/5900 specifically.
+remediation:
+  summary: Revoke only the world-open permission entries that cover a sensitive port.
+  reversible: true
+  destructive: false
+  notes: >-
+    Other rules on the same security group are left untouched. The full prior
+    rule set is written to the audit table before the revoke, so the exact
+    IpPermissions structure needed to restore it is recoverable.
+known_gaps:
+  - >-
+    ModifySecurityGroupRules can widen an existing rule to 0.0.0.0/0 without
+    emitting AuthorizeSecurityGroupIngress. Its requestParameters shape differs
+    enough to need its own rule; not written yet.
+  - >-
+    A rule opened via a prefix list that itself contains 0.0.0.0/0 is not
+    matched.
+fixture_status: derived-from-documentation
+fixture_verified_against_live_event: false

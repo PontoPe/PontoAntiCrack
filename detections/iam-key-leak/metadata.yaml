@@ -1,0 +1,31 @@
+id: iam-key-leak
+name: IAM access key used by an unauthorised party
+package: iam_key_leak
+severity: critical
+event_source: guardduty
+description: >-
+  GuardDuty raised a MEDIUM-or-higher finding whose subject resource is an IAM
+  access key — anomalous ASN or geography, credential exfiltration from an
+  instance role, or a known pentest distribution. The pattern trusts GuardDuty
+  for the anomaly decision and does not try to re-derive it from raw CloudTrail.
+attack:
+  - id: T1552.001
+    name: "Unsecured Credentials: Credentials In Files"
+  - id: T1078.004
+    name: "Valid Accounts: Cloud Accounts"
+remediation:
+  summary: Capture last-used metadata, then set the access key to Inactive.
+  reversible: true
+  destructive: false
+  notes: >-
+    The key is deactivated, never deleted. Deleting it destroys the
+    GetAccessKeyLastUsed record, which is often the only evidence of what the
+    attacker actually reached. Reactivating is a one-line undo.
+guards:
+  - >-
+    A finding whose principal is the account root is never acted on
+    automatically — root keys cannot be safely deactivated by an automation
+    role, and getting it wrong locks the account owner out. It escalates as a
+    critical alert instead.
+fixture_status: derived-from-documentation
+fixture_verified_against_live_event: false

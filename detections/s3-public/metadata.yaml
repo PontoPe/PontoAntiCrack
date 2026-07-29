@@ -1,0 +1,26 @@
+id: s3-public
+name: Public S3 bucket exposure
+package: s3_public
+severity: high
+event_source: cloudtrail
+description: >-
+  A bucket ACL, bucket policy, or Block Public Access configuration was changed
+  in a way that can expose the bucket to the internet. The pattern is a coarse
+  trigger on the four mutating APIs; the handler decides whether the resulting
+  state is actually public.
+attack:
+  - id: T1530
+    name: Data from Cloud Storage
+  - id: T1562.001
+    name: "Impair Defenses: Disable or Modify Tools"
+    note: Applies to DeleteBucketPublicAccessBlock specifically.
+remediation:
+  summary: Enable all four Block Public Access settings; reset a public ACL to private.
+  reversible: true
+  destructive: false
+  notes: >-
+    The bucket policy is never deleted. Block Public Access neutralises a public
+    policy without discarding it, which keeps the operator's intent recoverable
+    and keeps the policy available as incident-response evidence.
+fixture_status: derived-from-documentation
+fixture_verified_against_live_event: false

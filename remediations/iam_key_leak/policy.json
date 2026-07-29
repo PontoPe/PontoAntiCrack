@@ -1,0 +1,44 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InspectAccessKey",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetAccessKeyLastUsed",
+        "iam:GetUser",
+        "iam:ListAccessKeys",
+        "iam:ListUserTags"
+      ],
+      "Resource": "arn:${partition}:iam::${account_id}:user/*"
+    },
+    {
+      "Sid": "DeactivateAccessKey",
+      "Effect": "Allow",
+      "Action": ["iam:UpdateAccessKey"],
+      "Resource": "arn:${partition}:iam::${account_id}:user/*"
+    },
+    {
+      "Sid": "NeverDeleteCredentialsAndNeverEscalate",
+      "Effect": "Deny",
+      "Action": [
+        "iam:AttachRolePolicy",
+        "iam:AttachUserPolicy",
+        "iam:CreateAccessKey",
+        "iam:CreateLoginProfile",
+        "iam:CreatePolicyVersion",
+        "iam:CreateUser",
+        "iam:DeleteAccessKey",
+        "iam:DeleteUser",
+        "iam:PassRole",
+        "iam:PutRolePolicy",
+        "iam:PutUserPolicy",
+        "iam:SetDefaultPolicyVersion",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:UpdateLoginProfile",
+        "sts:AssumeRole"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

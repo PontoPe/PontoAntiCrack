@@ -1,0 +1,29 @@
+{
+  "source": ["aws.ec2"],
+  "detail-type": ["AWS API Call via CloudTrail"],
+  "detail": {
+    "eventSource": ["ec2.amazonaws.com"],
+    "eventName": ["AuthorizeSecurityGroupIngress"],
+    "errorCode": [{ "exists": false }]
+  },
+  "$or": [
+    {
+      "detail": {
+        "requestParameters": {
+          "ipPermissions": {
+            "items": { "ipRanges": { "items": { "cidrIp": ["0.0.0.0/0"] } } }
+          }
+        }
+      }
+    },
+    {
+      "detail": {
+        "requestParameters": {
+          "ipPermissions": {
+            "items": { "ipv6Ranges": { "items": { "cidrIpv6": ["::/0"] } } }
+          }
+        }
+      }
+    }
+  ]
+}
