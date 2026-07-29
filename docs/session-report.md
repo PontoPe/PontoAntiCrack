@@ -1,5 +1,9 @@
 # Session report — 2026-07-29
 
+> Orientation and current state live in [handoff.md](handoff.md). This document
+> is the operational detail behind it: what to capture, in what order to apply,
+> and what it costs.
+
 Written in one autonomous session with no AWS access. Everything below was
 validated locally: `pytest`, `ruff`, `ruff format`, `mypy --strict`,
 `terraform fmt`, `terraform validate`, `tflint`, `trivy config`, `checkov`,
@@ -101,7 +105,7 @@ aws events test-event-pattern \
   --event "$(jq -c . tests/fixtures/cloudtrail/sg-open/authorize-ingress-ssh-world.json)"
 ```
 
-This is the check that closes ADR-010's limitation. Run it for all nine
+This is the check that closes ADR-010's limitation. Run it for all fifteen
 fixtures — positives must return `true`, `benign-*` must return `false`.
 
 ### `s3-public` — 5 fixtures
@@ -146,7 +150,7 @@ it) but does affect anyone reading the audit snapshot.
 `test-event-pattern` answers both in one call, and it is the very first thing to
 run after apply.
 
-### `iam-key-leak` — 4 fixtures
+### `iam-key-leak` — 5 fixtures
 
 | Fixture | Must | How to capture |
 |---|---|---|
@@ -154,6 +158,7 @@ run after apply.
 | `unauthorized-access-root-credentials.json` | match, then **escalate** | Do not reproduce with real root credentials. Take a sample finding and edit `userType`/`userName` to `Root` |
 | `credential-exfiltration-assumed-role.json` | match, then **escalate** | Stratus `aws.credential-access.ec2-steal-instance-credentials` |
 | `benign-low-severity-recon.json` | **not** match | `create-sample-findings --finding-types Discovery:IAMUser/AnomalousBehavior` |
+| `benign-ec2-instance-finding.json` | **not** match | `create-sample-findings --finding-types CryptoCurrency:EC2/BitcoinTool.B!DNS` — high severity, but `resourceType` is `Instance`, so there is no key to deactivate |
 
 **Caveat on sample findings:** `create-sample-findings` produces synthetic
 `resource` values. The envelope and the `type`/`severity`/`resourceType` fields

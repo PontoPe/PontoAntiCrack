@@ -10,6 +10,8 @@ Detection-as-code and automated remediation for AWS: CloudTrail → EventBridge 
 > event fixture is derived from AWS documentation rather than from an observed
 > event. What that does and does not prove is spelled out in
 > [What is actually proven](#what-is-actually-proven).
+>
+> Picking this up cold? Start at **[docs/handoff.md](docs/handoff.md)**.
 
 ---
 

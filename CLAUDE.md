@@ -2,6 +2,9 @@
 
 Read this before touching anything. It is the handoff between sessions.
 
+Full project handoff — current state, what is proven vs. claimed, the exact next
+actions, and every known gap: **`docs/handoff.md`**.
+
 ## What this is
 
 Detection-as-code and automated remediation for AWS: CloudTrail → EventBridge → Lambda, with every detection written as tested code and validated by detonating the real attack technique against an isolated lab account.
