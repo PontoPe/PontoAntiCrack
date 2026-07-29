@@ -1,0 +1,95 @@
+# Attack scenarios, one per detection.
+#
+# NOTHING HERE HAS BEEN RUN. These are written and ready; executing them
+# requires a confirmed lab account ID typed at the prompt, which is a decision
+# made in front of the keyboard and not by a script.
+#
+# `expect` is what assert.sh checks after detonation. It is deliberately
+# specific: "an alert fired" is not evidence, "the audit table holds an APPLIED
+# record for this resource and the resource is no longer public" is.
+
+version: 1
+
+defaults:
+  # Both halves of the guard. STRATUS_LAB_ACCOUNT_ID must be exported and must
+  # match the caller identity, or assert.sh refuses to do anything.
+  require_env: [STRATUS_LAB_ACCOUNT_ID, AWS_PROFILE]
+  timeout_seconds: 300
+  poll_interval_seconds: 5
+
+scenarios:
+  - detection: s3-public
+    ttp: aws.exfiltration.s3-backdoor
+    technique: T1530
+    description: >-
+      Stratus creates a bucket and attaches a policy granting read to an
+      external principal. Triggers PutBucketPolicy with a wildcard-adjacent
+      grant.
+    caveat: >-
+      The stock scenario grants to a specific external account, not to "*".
+      The s3-public handler treats a named external principal as NOT public,
+      by design. Confirm which shape the detonation produces before treating a
+      no-match as a detection failure — this may need a custom scenario that
+      grants to AllUsers instead.
+    expect:
+      audit_status: APPLIED
+      resource_type: bucket
+      assertions:
+        - name: block_public_access_enabled
+          command: aws s3api get-public-access-block --bucket "${RESOURCE}"
+          expect_json: >-
+            .PublicAccessBlockConfiguration
+            | .BlockPublicAcls and .IgnorePublicAcls
+              and .BlockPublicPolicy and .RestrictPublicBuckets
+        - name: policy_retained_as_evidence
+          command: aws s3api get-bucket-policy --bucket "${RESOURCE}"
+          expect_exit: 0
+          why: >-
+            The remediation must NOT have deleted the policy. A non-zero exit
+            here means the handler destroyed incident-response evidence.
+
+  - detection: iam-key-leak
+    ttp: aws.credential-access.ec2-steal-instance-credentials
+    technique: T1552.001
+    description: >-
+      Stratus stands up an instance with a role, retrieves its credentials from
+      IMDS, and uses them from outside AWS. Produces
+      UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS.
+    caveat: >-
+      This produces a finding about an AssumedRole session, which the handler
+      escalates rather than remediates — temporary credentials cannot be
+      deactivated. So the expected status is ESCALATED, not APPLIED. Proving the
+      APPLIED path needs a long-lived IAM user key used from a flagged IP, which
+      Stratus does not ship a scenario for.
+    expect:
+      audit_status: ESCALATED
+      resource_type: access_key
+      assertions:
+        - name: nothing_was_deactivated
+          why: >-
+            The escalate-only path must take no action. Any state change here is
+            a bug in the guard, not a successful remediation.
+    guardduty_lead_time_minutes: 15
+
+  - detection: sg-open
+    ttp: aws.defense-evasion.security-group-open-port-22-ingress
+    technique: T1190
+    description: >-
+      Stratus opens port 22 to 0.0.0.0/0 on a security group. The cleanest
+      end-to-end path of the three: CloudTrail is immediate, the pattern is
+      exact, and the remediation is one API call.
+    expect:
+      audit_status: APPLIED
+      resource_type: security_group
+      assertions:
+        - name: world_open_ssh_revoked
+          command: aws ec2 describe-security-groups --group-ids "${RESOURCE}"
+          expect_json: >-
+            [.SecurityGroups[0].IpPermissions[]
+             | select(.FromPort <= 22 and .ToPort >= 22)
+             | .IpRanges[].CidrIp] | index("0.0.0.0/0") == null
+        - name: other_rules_survived
+          why: >-
+            Checked by hand against the ip_permissions_before snapshot in the
+            audit item. A remediation that revoked more than the world-open
+            entry is threat R2 realised.
