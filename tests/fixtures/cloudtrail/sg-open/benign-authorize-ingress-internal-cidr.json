@@ -1,0 +1,63 @@
+{
+  "_pac_fixture": {
+    "status": "derived-from-documentation",
+    "verified_against_live_event": false,
+    "negative": "SSH from 10.0.0.0/8 is the single most common legitimate security group change there is. If the pattern matched this, every routine ingress edit in the organisation would invoke the Lambda.",
+    "source": "AWS EC2 API reference for AuthorizeSecurityGroupIngress.",
+    "capture": "In the lab account: aws ec2 authorize-security-group-ingress --group-id <sg> --protocol tcp --port 22 --cidr 10.0.0.0/8 --profile lab"
+  },
+  "version": "0",
+  "id": "708192a3-b4c5-4d6e-9f60-718293a4b5c6",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.ec2",
+  "account": "111111111111",
+  "time": "2026-07-28T15:12:44Z",
+  "region": "sa-east-1",
+  "resources": [],
+  "detail": {
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEEXAMPLE01",
+      "arn": "arn:aws:iam::111111111111:user/lab-operator",
+      "accountId": "111111111111",
+      "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+      "userName": "lab-operator"
+    },
+    "eventTime": "2026-07-28T15:12:44Z",
+    "eventSource": "ec2.amazonaws.com",
+    "eventName": "AuthorizeSecurityGroupIngress",
+    "awsRegion": "sa-east-1",
+    "sourceIPAddress": "203.0.113.42",
+    "userAgent": "[aws-cli/2.36.9 Python/3.12.6 Linux/6.8.0 exe/x86_64.ubuntu.24]",
+    "requestParameters": {
+      "groupId": "sg-0a1b2c3d4e5f60718",
+      "ipPermissions": {
+        "items": [
+          {
+            "ipProtocol": "tcp",
+            "fromPort": 22,
+            "toPort": 22,
+            "groups": {},
+            "ipRanges": {
+              "items": [{ "cidrIp": "10.0.0.0/8", "description": "bastion subnet" }]
+            },
+            "ipv6Ranges": {},
+            "prefixListIds": {}
+          }
+        ]
+      }
+    },
+    "responseElements": {
+      "requestId": "a3b4c5d6-e7f0-8192-a3b4-c5d6e7f08192",
+      "_return": true
+    },
+    "requestID": "a3b4c5d6-e7f0-8192-a3b4-c5d6e7f08192",
+    "eventID": "8192a3b4-c5d6-4e7f-9081-92a3b4c5d6e7",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111111111111",
+    "eventCategory": "Management"
+  }
+}

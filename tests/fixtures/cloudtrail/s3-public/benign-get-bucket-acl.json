@@ -1,0 +1,47 @@
+{
+  "_pac_fixture": {
+    "status": "derived-from-documentation",
+    "verified_against_live_event": false,
+    "negative": "Read-only API. Reading an ACL cannot make a bucket public, and matching it would invoke the Lambda on every console page load of the bucket permissions tab.",
+    "source": "AWS S3 API reference for GetBucketAcl.",
+    "capture": "In the lab account: aws s3api get-bucket-acl --bucket <lab-bucket> --profile lab"
+  },
+  "version": "0",
+  "id": "e0c4b3a7-3c7f-4e5d-af3e-9d4a5b6c7d8e",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.s3",
+  "account": "111111111111",
+  "time": "2026-07-28T14:15:20Z",
+  "region": "sa-east-1",
+  "resources": [],
+  "detail": {
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEEXAMPLE01",
+      "arn": "arn:aws:iam::111111111111:user/lab-operator",
+      "accountId": "111111111111",
+      "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+      "userName": "lab-operator"
+    },
+    "eventTime": "2026-07-28T14:15:20Z",
+    "eventSource": "s3.amazonaws.com",
+    "eventName": "GetBucketAcl",
+    "awsRegion": "sa-east-1",
+    "sourceIPAddress": "203.0.113.42",
+    "userAgent": "[aws-cli/2.36.9 Python/3.12.6 Linux/6.8.0 exe/x86_64.ubuntu.24]",
+    "requestParameters": {
+      "bucketName": "pac-lab-demo-assets",
+      "Host": "pac-lab-demo-assets.s3.sa-east-1.amazonaws.com",
+      "acl": ""
+    },
+    "responseElements": null,
+    "requestID": "F8Q2K1M3P5R7N4T9",
+    "eventID": "b05f1b9d-6e5c-4d4b-a0af-4c5d6e7f8091",
+    "readOnly": true,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111111111111",
+    "eventCategory": "Management"
+  }
+}

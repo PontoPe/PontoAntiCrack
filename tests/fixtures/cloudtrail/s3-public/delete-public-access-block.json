@@ -1,0 +1,46 @@
+{
+  "_pac_fixture": {
+    "status": "derived-from-documentation",
+    "verified_against_live_event": false,
+    "source": "AWS S3 API reference for DeletePublicAccessBlock. CloudTrail names the event DeleteBucketPublicAccessBlock, which differs from the API name — worth confirming first.",
+    "capture": "In the lab account: aws s3api delete-public-access-block --bucket <lab-bucket> --profile lab"
+  },
+  "version": "0",
+  "id": "d9b3a2f6-2b6e-4d4c-9e2d-8c3f4a5b6c7d",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.s3",
+  "account": "111111111111",
+  "time": "2026-07-28T14:11:03Z",
+  "region": "sa-east-1",
+  "resources": [],
+  "detail": {
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEEXAMPLE01",
+      "arn": "arn:aws:iam::111111111111:user/lab-operator",
+      "accountId": "111111111111",
+      "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+      "userName": "lab-operator"
+    },
+    "eventTime": "2026-07-28T14:11:03Z",
+    "eventSource": "s3.amazonaws.com",
+    "eventName": "DeleteBucketPublicAccessBlock",
+    "awsRegion": "sa-east-1",
+    "sourceIPAddress": "203.0.113.42",
+    "userAgent": "[aws-cli/2.36.9 Python/3.12.6 Linux/6.8.0 exe/x86_64.ubuntu.24]",
+    "requestParameters": {
+      "bucketName": "pac-lab-demo-assets",
+      "Host": "pac-lab-demo-assets.s3.sa-east-1.amazonaws.com",
+      "publicAccessBlock": ""
+    },
+    "responseElements": null,
+    "requestID": "K1M3P5R7N4T9F8Q2",
+    "eventID": "af4e0a8c-5d4b-4c3a-9f9e-3b4c5d6e7f80",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111111111111",
+    "eventCategory": "Management"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "_pac_fixture": {
+    "status": "derived-from-documentation",
+    "verified_against_live_event": false,
+    "negative": "The authorize call failed, so the rule does not exist. Remediating a rule that was never created would revoke nothing and record a false APPLIED.",
+    "source": "CloudTrail error-record shape for EC2: errorCode present, responseElements null.",
+    "capture": "In the lab account, call AuthorizeSecurityGroupIngress with a principal lacking ec2:AuthorizeSecurityGroupIngress."
+  },
+  "version": "0",
+  "id": "92a3b4c5-d6e7-4f08-b192-a3b4c5d6e7f0",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.ec2",
+  "account": "111111111111",
+  "time": "2026-07-28T15:16:01Z",
+  "region": "sa-east-1",
+  "resources": [],
+  "detail": {
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "AssumedRole",
+      "principalId": "AROAEXAMPLEEXAMPLE03:intruder",
+      "arn": "arn:aws:sts::111111111111:assumed-role/lab-readonly/intruder",
+      "accountId": "111111111111",
+      "accessKeyId": "ASIAIOSFODNN7EXAMPLE",
+      "sessionContext": {
+        "sessionIssuer": {
+          "type": "Role",
+          "principalId": "AROAEXAMPLEEXAMPLE03",
+          "arn": "arn:aws:iam::111111111111:role/lab-readonly",
+          "accountId": "111111111111",
+          "userName": "lab-readonly"
+        }
+      }
+    },
+    "eventTime": "2026-07-28T15:16:01Z",
+    "eventSource": "ec2.amazonaws.com",
+    "eventName": "AuthorizeSecurityGroupIngress",
+    "awsRegion": "sa-east-1",
+    "sourceIPAddress": "192.0.2.200",
+    "userAgent": "[aws-cli/2.36.9 Python/3.12.6 Linux/6.8.0 exe/x86_64.ubuntu.24]",
+    "errorCode": "Client.UnauthorizedOperation",
+    "errorMessage": "You are not authorized to perform this operation.",
+    "requestParameters": {
+      "groupId": "sg-0a1b2c3d4e5f60718",
+      "ipPermissions": {
+        "items": [
+          {
+            "ipProtocol": "tcp",
+            "fromPort": 22,
+            "toPort": 22,
+            "groups": {},
+            "ipRanges": {
+              "items": [{ "cidrIp": "0.0.0.0/0" }]
+            },
+            "ipv6Ranges": {},
+            "prefixListIds": {}
+          }
+        ]
+      }
+    },
+    "responseElements": null,
+    "requestID": "b4c5d6e7-f081-92a3-b4c5-d6e7f08192a3",
+    "eventID": "a3b4c5d6-e7f0-4819-a2a3-b4c5d6e7f081",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111111111111",
+    "eventCategory": "Management"
+  }
+}

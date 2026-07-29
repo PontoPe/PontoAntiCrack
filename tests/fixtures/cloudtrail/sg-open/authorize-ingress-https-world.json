@@ -1,0 +1,71 @@
+{
+  "_pac_fixture": {
+    "status": "derived-from-documentation",
+    "verified_against_live_event": false,
+    "note": "Matches the pattern on purpose and is then dropped by the handler. Port ranges cannot be evaluated in an EventBridge pattern, so 443-to-the-world reaches the Lambda and the handler is what decides a public web server is not an incident.",
+    "source": "AWS EC2 API reference for AuthorizeSecurityGroupIngress.",
+    "capture": "In the lab account: aws ec2 authorize-security-group-ingress --group-id <sg> --protocol tcp --port 443 --cidr 0.0.0.0/0 --profile lab"
+  },
+  "version": "0",
+  "id": "5e6f7081-92a3-4b4c-9d4e-5f6a7b8c9d0e",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.ec2",
+  "account": "111111111111",
+  "time": "2026-07-28T15:08:12Z",
+  "region": "sa-east-1",
+  "resources": [],
+  "detail": {
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "AssumedRole",
+      "principalId": "AROAEXAMPLEEXAMPLE02:build",
+      "arn": "arn:aws:sts::111111111111:assumed-role/lab-deploy/build",
+      "accountId": "111111111111",
+      "accessKeyId": "ASIAIOSFODNN7EXAMPLE",
+      "sessionContext": {
+        "sessionIssuer": {
+          "type": "Role",
+          "principalId": "AROAEXAMPLEEXAMPLE02",
+          "arn": "arn:aws:iam::111111111111:role/lab-deploy",
+          "accountId": "111111111111",
+          "userName": "lab-deploy"
+        }
+      }
+    },
+    "eventTime": "2026-07-28T15:08:12Z",
+    "eventSource": "ec2.amazonaws.com",
+    "eventName": "AuthorizeSecurityGroupIngress",
+    "awsRegion": "sa-east-1",
+    "sourceIPAddress": "198.51.100.17",
+    "userAgent": "[aws-sdk-go/1.55.5 (go1.22.5; linux; amd64)]",
+    "requestParameters": {
+      "groupId": "sg-0b2c3d4e5f6071829",
+      "ipPermissions": {
+        "items": [
+          {
+            "ipProtocol": "tcp",
+            "fromPort": 443,
+            "toPort": 443,
+            "groups": {},
+            "ipRanges": {
+              "items": [{ "cidrIp": "0.0.0.0/0", "description": "public web tier" }]
+            },
+            "ipv6Ranges": {},
+            "prefixListIds": {}
+          }
+        ]
+      }
+    },
+    "responseElements": {
+      "requestId": "92a3b4c5-d6e7-f081-92a3-b4c5d6e7f081",
+      "_return": true
+    },
+    "requestID": "92a3b4c5-d6e7-f081-92a3-b4c5d6e7f081",
+    "eventID": "6f708192-a3b4-4c5d-8e5f-6a7b8c9d0e1f",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111111111111",
+    "eventCategory": "Management"
+  }
+}

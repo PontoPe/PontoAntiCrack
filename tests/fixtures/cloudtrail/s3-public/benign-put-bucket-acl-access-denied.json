@@ -1,0 +1,58 @@
+{
+  "_pac_fixture": {
+    "status": "derived-from-documentation",
+    "verified_against_live_event": false,
+    "negative": "The call failed. IAM already stopped this attacker, the bucket never changed, and there is nothing to remediate. Waking a Lambda for every AccessDenied is how a detection becomes a cost centre.",
+    "source": "CloudTrail error-record shape: errorCode and errorMessage present, responseElements null.",
+    "capture": "In the lab account, call PutBucketAcl with a principal that lacks s3:PutBucketAcl."
+  },
+  "version": "0",
+  "id": "f1d5c4b8-4d80-4f6e-b04f-ae5b6c7d8e9f",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.s3",
+  "account": "111111111111",
+  "time": "2026-07-28T14:19:58Z",
+  "region": "sa-east-1",
+  "resources": [],
+  "detail": {
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "AssumedRole",
+      "principalId": "AROAEXAMPLEEXAMPLE03:intruder",
+      "arn": "arn:aws:sts::111111111111:assumed-role/lab-readonly/intruder",
+      "accountId": "111111111111",
+      "accessKeyId": "ASIAIOSFODNN7EXAMPLE",
+      "sessionContext": {
+        "sessionIssuer": {
+          "type": "Role",
+          "principalId": "AROAEXAMPLEEXAMPLE03",
+          "arn": "arn:aws:iam::111111111111:role/lab-readonly",
+          "accountId": "111111111111",
+          "userName": "lab-readonly"
+        }
+      }
+    },
+    "eventTime": "2026-07-28T14:19:58Z",
+    "eventSource": "s3.amazonaws.com",
+    "eventName": "PutBucketAcl",
+    "awsRegion": "sa-east-1",
+    "sourceIPAddress": "192.0.2.200",
+    "userAgent": "[aws-cli/2.36.9 Python/3.12.6 Linux/6.8.0 exe/x86_64.ubuntu.24]",
+    "errorCode": "AccessDenied",
+    "errorMessage": "User: arn:aws:sts::111111111111:assumed-role/lab-readonly/intruder is not authorized to perform: s3:PutBucketAcl",
+    "requestParameters": {
+      "bucketName": "pac-lab-demo-assets",
+      "Host": "pac-lab-demo-assets.s3.sa-east-1.amazonaws.com",
+      "acl": "",
+      "x-amz-acl": "public-read"
+    },
+    "responseElements": null,
+    "requestID": "T9F8Q2K1M3P5R7N4",
+    "eventID": "c1602cae-7f6d-4e5c-b1b0-5d6e7f809102",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111111111111",
+    "eventCategory": "Management"
+  }
+}

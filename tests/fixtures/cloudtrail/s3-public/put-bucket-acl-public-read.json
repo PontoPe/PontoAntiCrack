@@ -1,0 +1,58 @@
+{
+  "_pac_fixture": {
+    "status": "derived-from-documentation",
+    "verified_against_live_event": false,
+    "source": "AWS S3 API reference for PutBucketAcl plus the CloudTrail-via-EventBridge envelope documented in the EventBridge user guide.",
+    "capture": "In the lab account: aws s3api put-bucket-acl --bucket <lab-bucket> --acl public-read --profile lab; then read the delivered event from the detection Lambda's CloudWatch log group, or from the org trail in the log-archive account with: aws s3 cp s3://<org-trail-bucket>/AWSLogs/<org-id>/<account>/CloudTrail/<region>/<yyyy/mm/dd>/ . --recursive"
+  },
+  "version": "0",
+  "id": "b7f1e0f4-0f4c-4b2a-9c0b-6a1d2e3f4a5b",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.s3",
+  "account": "111111111111",
+  "time": "2026-07-28T14:02:11Z",
+  "region": "sa-east-1",
+  "resources": [],
+  "detail": {
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEEXAMPLE01",
+      "arn": "arn:aws:iam::111111111111:user/lab-operator",
+      "accountId": "111111111111",
+      "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+      "userName": "lab-operator"
+    },
+    "eventTime": "2026-07-28T14:02:11Z",
+    "eventSource": "s3.amazonaws.com",
+    "eventName": "PutBucketAcl",
+    "awsRegion": "sa-east-1",
+    "sourceIPAddress": "203.0.113.42",
+    "userAgent": "[aws-cli/2.36.9 Python/3.12.6 Linux/6.8.0 exe/x86_64.ubuntu.24]",
+    "requestParameters": {
+      "bucketName": "pac-lab-demo-assets",
+      "Host": "pac-lab-demo-assets.s3.sa-east-1.amazonaws.com",
+      "acl": "",
+      "x-amz-acl": "public-read"
+    },
+    "responseElements": null,
+    "additionalEventData": {
+      "SignatureVersion": "SigV4",
+      "AuthenticationMethod": "AuthHeader"
+    },
+    "requestID": "N4T9F8Q2K1M3P5R7",
+    "eventID": "8c2c8e6a-3b2f-4a1e-9d7c-1f2e3d4c5b6a",
+    "readOnly": false,
+    "resources": [
+      {
+        "accountId": "111111111111",
+        "type": "AWS::S3::Bucket",
+        "ARN": "arn:aws:s3:::pac-lab-demo-assets"
+      }
+    ],
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111111111111",
+    "eventCategory": "Management"
+  }
+}

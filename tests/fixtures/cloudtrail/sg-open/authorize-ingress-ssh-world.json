@@ -1,0 +1,62 @@
+{
+  "_pac_fixture": {
+    "status": "derived-from-documentation",
+    "verified_against_live_event": false,
+    "source": "AWS EC2 API reference for AuthorizeSecurityGroupIngress. The nested items[] wrapper under ipPermissions and ipRanges is the CloudTrail EC2 list encoding and is exactly what the pattern depends on — confirm it first.",
+    "capture": "In the lab account: aws ec2 authorize-security-group-ingress --group-id <sg> --protocol tcp --port 22 --cidr 0.0.0.0/0 --profile lab"
+  },
+  "version": "0",
+  "id": "1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5a6b",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.ec2",
+  "account": "111111111111",
+  "time": "2026-07-28T15:01:09Z",
+  "region": "sa-east-1",
+  "resources": [],
+  "detail": {
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEEXAMPLE01",
+      "arn": "arn:aws:iam::111111111111:user/lab-operator",
+      "accountId": "111111111111",
+      "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+      "userName": "lab-operator"
+    },
+    "eventTime": "2026-07-28T15:01:09Z",
+    "eventSource": "ec2.amazonaws.com",
+    "eventName": "AuthorizeSecurityGroupIngress",
+    "awsRegion": "sa-east-1",
+    "sourceIPAddress": "203.0.113.42",
+    "userAgent": "[aws-cli/2.36.9 Python/3.12.6 Linux/6.8.0 exe/x86_64.ubuntu.24]",
+    "requestParameters": {
+      "groupId": "sg-0a1b2c3d4e5f60718",
+      "ipPermissions": {
+        "items": [
+          {
+            "ipProtocol": "tcp",
+            "fromPort": 22,
+            "toPort": 22,
+            "groups": {},
+            "ipRanges": {
+              "items": [{ "cidrIp": "0.0.0.0/0" }]
+            },
+            "ipv6Ranges": {},
+            "prefixListIds": {}
+          }
+        ]
+      }
+    },
+    "responseElements": {
+      "requestId": "6f0a1b2c-3d4e-5f60-7182-93a4b5c6d7e8",
+      "_return": true
+    },
+    "requestID": "6f0a1b2c-3d4e-5f60-7182-93a4b5c6d7e8",
+    "eventID": "2b3c4d5e-6f70-4819-ab1c-2d3e4f5a6b7c",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111111111111",
+    "eventCategory": "Management"
+  }
+}
