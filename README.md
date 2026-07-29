@@ -11,7 +11,7 @@ Detection-as-code and automated remediation for AWS: CloudTrail → EventBridge 
 > event. What that does and does not prove is spelled out in
 > [What is actually proven](#what-is-actually-proven).
 >
-> Picking this up cold? Start at **[docs/handoff.md](docs/handoff.md)**.
+> Picking this up cold? Start at **[docs/PAChandoff.md](docs/PAChandoff.md)**.
 
 ---
 

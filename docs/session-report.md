@@ -1,6 +1,6 @@
 # Session report — 2026-07-29
 
-> Orientation and current state live in [handoff.md](handoff.md). This document
+> Orientation and current state live in [PAChandoff.md](PAChandoff.md). This document
 > is the operational detail behind it: what to capture, in what order to apply,
 > and what it costs.
 

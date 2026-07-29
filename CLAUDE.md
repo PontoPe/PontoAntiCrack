@@ -3,7 +3,11 @@
 Read this before touching anything. It is the handoff between sessions.
 
 Full project handoff — current state, what is proven vs. claimed, the exact next
-actions, and every known gap: **`docs/handoff.md`**.
+actions, and every known gap: **`docs/PAChandoff.md`**.
+
+How things get built here — build order, the ten-gate validation loop, the
+defects it caught, and the checklist for adding a detection:
+**`docs/PAChandbook.md`**.
 
 ## What this is
 

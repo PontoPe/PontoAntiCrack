@@ -205,9 +205,12 @@ outcome.
 
 ### Reading order for the other docs
 
-1. [session-report.md](session-report.md) — §3 (fixtures to capture) and §4
+1. [PAChandbook.md](PAChandbook.md) — how things get built here: build order,
+   the ten-gate validation loop, the defects that loop actually caught, and the
+   end-to-end checklist for adding a detection.
+2. [session-report.md](session-report.md) — §3 (fixtures to capture) and §4
    (apply order). The operational handoff.
-2. [architecture.md](architecture.md) — 15 ADRs. Read before disagreeing with a
+3. [architecture.md](architecture.md) — 15 ADRs. Read before disagreeing with a
    design choice; the reasoning is probably already there.
 3. [threat-model.md](threat-model.md) — R1–R10 with implementation status, plus
    the static-analysis suppression register.
