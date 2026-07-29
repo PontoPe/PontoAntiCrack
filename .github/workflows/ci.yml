@@ -7,7 +7,10 @@ on:
 
 permissions:
   contents: read
-  id-token: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   detections:
@@ -17,7 +20,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          # Matches the Lambda runtime in infra/modules/detection/main.tf.
+          # Testing on a different minor than the one that executes is how a
+          # detection passes CI and then fails on a cold start.
+          python-version: "3.13"
           cache: pip
 
       - run: pip install -r requirements-dev.txt
@@ -25,46 +31,91 @@ jobs:
       - name: lint
         run: |
           ruff check .
+          ruff format --check .
           mypy remediations/ notifier/
 
       - name: unit tests — event patterns + remediation handlers
         run: pytest tests/ -v --tb=short
 
-      # Every detection must have: a pattern, a handler, and a test that
-      # asserts both the match and the remediation action.
+      # A detection is a unit: pattern, handler, scoped policy, README,
+      # fixtures, and tests for both the match and the plausible near-miss.
+      # This also fails if a pattern test has no negative assertion — a
+      # detection tested only for what it catches passes CI forever while
+      # quietly matching everything.
       - name: coverage guard — no untested detection
         run: ./scripts/check-detection-coverage.sh
+
+      - name: shell scripts
+        run: shellcheck -x -S warning scripts/*.sh attack-sim/*.sh
 
   infra:
     name: terraform static analysis
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
       - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.8"
+
+      # archive_file needs the staged package to exist before plan/validate
+      # touches the data source.
+      - name: stage the deployment package
+        run: ./scripts/build-lambda.sh
+
       - run: terraform -chdir=infra fmt -check -recursive
-      # tfsec is EOL — folded into Trivy's `config` scanner
+
+      - name: validate
+        run: |
+          terraform -chdir=infra init -backend=false -input=false
+          terraform -chdir=infra validate
+
+      - uses: terraform-linters/setup-tflint@v4
+      - name: tflint
+        run: |
+          tflint --chdir=infra --init
+          tflint --chdir=infra --recursive
+
+      # tfsec is EOL — Aqua folded it into Trivy's `config` scanner.
       - uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: config
           scan-ref: infra
           severity: HIGH,CRITICAL
           exit-code: "1"
+
+      # Every suppression in the Terraform carries an inline justification.
+      # If checkov starts failing, read the finding before adding a seventh.
       - uses: bridgecrewio/checkov-action@master
         with:
           directory: infra
           quiet: true
 
-  # Live attack validation runs on a schedule against the isolated lab account,
-  # never on pull_request from a fork.
+  # Live attack validation runs against the isolated lab account only, on a
+  # manual-approval environment, and never on a pull request from a fork.
+  #
+  # NOT YET ENABLED. Turning this on means giving CI credentials that can
+  # detonate attack techniques, and that happens after the first manual run has
+  # been watched end to end — not before.
   live-validation:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: stratus red team validation
     runs-on: ubuntu-latest
-    environment: lab            # manual approval gate
+    environment: lab # manual approval gate
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       # - uses: aws-actions/configure-aws-credentials@v4
       #   with:
       #     role-to-assume: arn:aws:iam::<lab-account>:role/gha-attack-sim
       #     aws-region: sa-east-1
-      - run: echo "TODO: stratus detonate + assert + cleanup"
+      # - run: |
+      #     export STRATUS_LAB_ACCOUNT_ID=<lab-account>
+      #     stratus detonate aws.defense-evasion.security-group-open-port-22-ingress
+      #     ./attack-sim/assert.sh aws.defense-evasion.security-group-open-port-22-ingress
+      #     stratus cleanup aws.defense-evasion.security-group-open-port-22-ingress
+      - run: echo "live validation not enabled — see attack-sim/README.md"
