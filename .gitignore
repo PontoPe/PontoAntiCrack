@@ -9,6 +9,10 @@ __pycache__/
 *.tfstate.*
 *.tfvars
 !example.tfvars
+backend.hcl
 tfplan
 .env
 *.zip
+
+# Staged by scripts/build-lambda.sh, zipped by Terraform. Derived, never edited.
+build/

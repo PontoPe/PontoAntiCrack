@@ -1,0 +1,9 @@
+# Development and CI only. Nothing here is deployed — see pyproject.toml.
+boto3~=1.40
+botocore~=1.40
+moto[dynamodb,ec2,iam,s3,secretsmanager]~=5.1
+pytest~=8.4
+ruff~=0.14
+mypy~=1.18
+pyyaml~=6.0
+checkov~=3.2

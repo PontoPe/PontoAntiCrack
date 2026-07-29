@@ -1,7 +1,8 @@
 SHELL := /bin/bash
 PY := python3
+TF := terraform -chdir=infra
 
-.PHONY: help install test lint deploy destroy attack timing evidence clean
+.PHONY: help install build test lint fmt coverage validate deploy plan destroy attack timing evidence clean
 
 help: ## show targets
 	@grep -hE '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | column -t -s $$'\t'
@@ -9,19 +10,42 @@ help: ## show targets
 install: ## dev dependencies
 	$(PY) -m pip install -r requirements-dev.txt
 
+build: ## stage the Lambda deployment package into build/lambda
+	./scripts/build-lambda.sh
+
 test: ## unit tests — fixtures + moto, no AWS account needed
 	pytest tests/ -v
 
 lint: ## ruff + mypy + terraform static analysis
 	ruff check .
+	ruff format --check .
 	mypy remediations/ notifier/
-	cd infra && terraform fmt -check -recursive && trivy config . --severity HIGH,CRITICAL --exit-code 1 && checkov -d . --quiet
+	$(TF) fmt -check -recursive
+	trivy config infra --severity HIGH,CRITICAL --exit-code 1
+	checkov -d infra --quiet --compact
 
-deploy: ## deploy detections + remediations
-	cd infra && terraform init && terraform apply
+fmt: ## apply formatting
+	ruff format .
+	ruff check --fix .
+	$(TF) fmt -recursive
+
+coverage: ## fail if any detection is missing a piece of its unit
+	./scripts/check-detection-coverage.sh
+
+validate: build ## terraform validate — works without credentials
+	$(TF) init -backend=false -input=false
+	$(TF) validate
+
+plan: build ## terraform plan — needs credentials
+	$(TF) init -input=false
+	$(TF) plan
+
+deploy: build ## deploy detections + remediations
+	$(TF) init -input=false
+	$(TF) apply
 
 destroy:
-	cd infra && terraform destroy
+	$(TF) destroy
 
 attack: ## live technique execution — ISOLATED ACCOUNT ONLY: make attack TTP=aws.exfiltration.s3-backdoor
 	@echo "target account: $$(aws sts get-caller-identity --query Account --output text)"
@@ -36,4 +60,5 @@ timing: ## measure detection + remediation latency per detection
 evidence: timing ## regenerate evidence artifacts
 
 clean:
-	find . -name '__pycache__' -type d -prune -exec rm -rf {} + ; rm -rf .pytest_cache .mypy_cache
+	rm -rf build
+	find . -name '__pycache__' -type d -prune -exec rm -rf {} + ; rm -rf .pytest_cache .mypy_cache .ruff_cache

@@ -1,0 +1,47 @@
+[project]
+name = "pontoanticrack"
+version = "0.1.0"
+description = "Detection-as-code and automated remediation for AWS"
+requires-python = ">=3.13"
+
+# Runtime dependencies are deliberately empty: every Lambda in this repo runs on
+# boto3/botocore as shipped by the AWS Python runtime, and everything else it
+# needs is in the standard library. No layer, no vendored wheels, no supply
+# chain to review before each deploy.
+dependencies = []
+
+[tool.setuptools]
+packages = ["remediations", "notifier"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["build", ".terraform"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "S", "PTH"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert; tests also hardcode obviously fake account IDs and key IDs.
+"tests/**" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unreachable = true
+disallow_any_generics = true
+files = ["remediations", "notifier"]
+
+# boto3 ships no type information in the runtime we deploy to, and pulling
+# boto3-stubs into CI to type-check code that runs against the runtime's own
+# boto3 would type-check a different library than the one that executes.
+# Clients are annotated as `Any` at the seams instead; see docs/architecture.md
+# ADR-006.
+[[tool.mypy.overrides]]
+module = ["boto3.*", "botocore.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+filterwarnings = ["error::DeprecationWarning:remediations.*", "error::DeprecationWarning:notifier.*"]
