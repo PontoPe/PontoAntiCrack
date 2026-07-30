@@ -94,7 +94,7 @@ Windows 11, PowerShell 7:
 - The PowerShell tool's working directory persists between calls — a `Set-Location infra` followed later by another `Set-Location infra` fails. Use absolute paths.
 - Makefiles assume a POSIX shell. Run them from Git Bash or WSL.
 - Installed: terraform 1.15.8, tflint 0.64.0 (+aws ruleset 0.44.0), trivy 0.72.0, checkov 3.3.8, shellcheck, aws-cli 2.36.9, Python 3.14. Local Python is 3.14; CI and the Lambda runtime are 3.13.
-- AWS auth is IAM Identity Center SSO, profile `mgmt`, region `sa-east-1`. Sessions expire after 1 hour. **Never introduce a static access key.**
+- AWS auth is IAM Identity Center SSO, profile `mgmt`, region `sa-east-1`. Sessions expire after 12 hours; log out explicitly when the work is finished. **Never introduce a static access key.**
 
 ## Sibling repos
 
