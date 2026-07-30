@@ -4,7 +4,14 @@ Updated: 2026-07-30
 
 ## Current step
 
-B1/B2 is blocked on the Lambda account quota. The partial state is reconciled
+**B2 is not blocked and has not been run.** It calls `aws events test-event-pattern`,
+which needs credentials and nothing else — no Lambda, no rule, no completed
+apply. `make patterns` now runs all three patterns against all fifteen
+fixtures and fails on the first disagreement with the service. Run it as soon
+as there is an AWS session; it is where the three load-bearing assumptions
+about CloudTrail event shape are actually settled.
+
+B1 remains blocked on the Lambda account quota. The partial state is reconciled
 and stable, but the account rejected reserved concurrency `5` on each Lambda
 because its regional concurrent-execution quota is `10` and Lambda requires at
 least `10` unreserved executions. No attack technique was detonated. The saved
@@ -95,12 +102,25 @@ plan used for that partial apply is invalid and must not be reused.
 - `stratus status` is clean: all techniques are `COLD`.
 - The temporary AWS console session was signed out.
 
+## CI
+
+CI had been failing on every push and the cause was not the quota.
+`check-detection-coverage.sh` and `build-lambda.sh` were committed mode 644, so
+the runner exited 126 with "Permission denied" before any gate ran — the
+negative-test gate had never actually executed in CI, only locally where
+git-bash ignores the mode bit. `aquasecurity/trivy-action@0.28.0` had also
+stopped resolving and is now pinned to the v0.36.0 SHA. CI is green as of
+commit `e796ecf`.
+
 ## TODO
 
-1. Obtain an AWS-supported path that accepts the exact applied-quota increase
+1. Run `make patterns` first. It needs only an AWS session and settles ADR-010's
+   documented limitation. A `false` on a positive fixture, or a `true` on a
+   `benign-*` one, kills that detection regardless of the 171 unit tests.
+2. Obtain an AWS-supported path that accepts the exact applied-quota increase
    from `10` to `25`; the Service Quotas API and console currently reject it
    against the formal default of `1000`.
-2. After `L-B99A9384` is actually at least `25`, reconfirm the caller and
+3. After `L-B99A9384` is actually at least `25`, reconfirm the caller and
    generate a new saved plan from the reconciled state.
-3. Fully review that new plan. Do not reuse the stale plan or accept destroys,
+4. Fully review that new plan. Do not reuse the stale plan or accept destroys,
    account changes, weaker concurrency, or unexpected targets.
