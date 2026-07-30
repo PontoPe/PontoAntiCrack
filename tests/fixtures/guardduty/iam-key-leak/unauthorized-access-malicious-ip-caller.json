@@ -1,69 +1,383 @@
 {
   "_pac_fixture": {
-    "status": "derived-from-documentation",
-    "verified_against_live_event": false,
-    "source": "GuardDuty finding schema (schemaVersion 2.0) and the UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom finding type documentation.",
-    "capture": "In the lab account, generate GuardDuty sample findings: aws guardduty create-sample-findings --detector-id <id> --finding-types UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom --profile lab. Sample findings carry synthetic resource values, so the accessKeyDetails block still needs checking against a real one."
+    "status": "verified",
+    "verified_against_live_event": true,
+    "source": "Captured from the live GuardDuty detector in awlz-lab on 2026-07-30 via create-sample-findings, then sanitized: account ID, detector ID, access key IDs, principal IDs, instance IDs and addresses are replaced. It is a service-generated sample, so the type, severity and resource shape are exactly what GuardDuty emits, but no actual compromise produced it.",
+    "capture": "aws guardduty create-sample-findings --detector-id <id> --finding-types 'UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom', then aws guardduty get-findings"
   },
   "version": "0",
-  "id": "b1c2d3e4-f506-4718-a92b-3c4d5e6f7081",
+  "id": "c74b54ee56ad4385a64c16eeea0de845",
   "detail-type": "GuardDuty Finding",
   "source": "aws.guardduty",
   "account": "111111111111",
-  "time": "2026-07-28T16:20:05Z",
+  "time": "2026-07-30T19:26:59.803Z",
   "region": "sa-east-1",
   "resources": [],
   "detail": {
-    "schemaVersion": "2.0",
     "accountId": "111111111111",
-    "region": "sa-east-1",
+    "arn": "arn:aws:guardduty:sa-east-1:111111111111:detector/00000000000000000000000000000000/finding/c74b54ee56ad4385a64c16eeea0de845",
+    "createdAt": "2026-07-30T19:26:59.803Z",
+    "description": "An API was invoked from an IP address on the custom threat list.",
+    "id": "c74b54ee56ad4385a64c16eeea0de845",
     "partition": "aws",
-    "id": "7ac1e2b3d4f50617283940a1b2c3d4e5",
-    "arn": "arn:aws:guardduty:sa-east-1:111111111111:detector/1ab2c3d4e5f60718293a4b5c6d7e8f90/finding/7ac1e2b3d4f50617283940a1b2c3d4e5",
-    "type": "UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom",
+    "region": "sa-east-1",
     "resource": {
-      "resourceType": "AccessKey",
       "accessKeyDetails": {
-        "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
-        "principalId": "AIDAEXAMPLEEXAMPLE04",
-        "userType": "IAMUser",
-        "userName": "lab-ci-publisher"
-      }
+        "accessKeyId": "GeneratedFindingAccessKeyId",
+        "principalId": "GeneratedFindingPrincipalId",
+        "userName": "GeneratedFindingAWSService",
+        "userType": "AWSService"
+      },
+      "instanceDetails": {
+        "availabilityZone": "generated-az-1a",
+        "iamInstanceProfile": {
+          "arn": "arn:aws:iam::111111111111:instance-profile/generated",
+          "id": "GeneratedFindingInstanceProfileId"
+        },
+        "imageDescription": "GeneratedFindingInstaceImageDescription",
+        "imageId": "ami-99999999",
+        "instanceId": "i-0123456789abcdef0",
+        "instanceState": "running",
+        "instanceType": "m3.xlarge",
+        "outpostArn": "arn:aws:outposts:us-west-2:123456789000:outpost/op-0fbc006e9abbc73c3",
+        "launchTime": "2016-08-02T02:05:06.000Z",
+        "networkInterfaces": [
+          {
+            "ipv6Addresses": [],
+            "networkInterfaceId": "eni-abcdef00",
+            "privateDnsName": "GeneratedFindingPrivateDnsName1",
+            "privateIpAddress": "203.0.113.42",
+            "privateIpAddresses": [
+              {
+                "privateDnsName": "GeneratedFindingPrivateName1",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName2",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName3",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName4",
+                "privateIpAddress": "203.0.113.42"
+              }
+            ],
+            "publicDnsName": "GeneratedFindingPublicDNSName1",
+            "publicIp": "198.51.100.1",
+            "securityGroups": [
+              {
+                "groupId": "GeneratedFindingSecurityId1",
+                "groupName": "GeneratedFindingSecurityGroupName1"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId2",
+                "groupName": "GeneratedFindingSecurityGroupName2"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId3",
+                "groupName": "GeneratedFindingSecurityGroupName3"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId4",
+                "groupName": "GeneratedFindingSecurityGroupName4"
+              }
+            ],
+            "subnetId": "GeneratedFindingSubnetId1",
+            "vpcId": "vpc-generatedvpcid1"
+          },
+          {
+            "ipv6Addresses": [],
+            "networkInterfaceId": "eni-abcdef01",
+            "privateDnsName": "GeneratedFindingPrivateDnsName2",
+            "privateIpAddress": "203.0.113.42",
+            "privateIpAddresses": [
+              {
+                "privateDnsName": "GeneratedFindingPrivateName1",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName2",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName3",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName4",
+                "privateIpAddress": "203.0.113.42"
+              }
+            ],
+            "publicDnsName": "GeneratedFindingPublicDNSName2",
+            "publicIp": "198.51.100.2",
+            "securityGroups": [
+              {
+                "groupId": "GeneratedFindingSecurityId1",
+                "groupName": "GeneratedFindingSecurityGroupName1"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId2",
+                "groupName": "GeneratedFindingSecurityGroupName2"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId3",
+                "groupName": "GeneratedFindingSecurityGroupName3"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId4",
+                "groupName": "GeneratedFindingSecurityGroupName4"
+              }
+            ],
+            "subnetId": "GeneratedFindingSubnetId2",
+            "vpcId": "vpc-generatedvpcid2"
+          },
+          {
+            "ipv6Addresses": [],
+            "networkInterfaceId": "eni-abcdef02",
+            "privateDnsName": "GeneratedFindingPrivateDnsName3",
+            "privateIpAddress": "203.0.113.42",
+            "privateIpAddresses": [
+              {
+                "privateDnsName": "GeneratedFindingPrivateName1",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName2",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName3",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName4",
+                "privateIpAddress": "203.0.113.42"
+              }
+            ],
+            "publicDnsName": "GeneratedFindingPublicDNSName3",
+            "publicIp": "198.51.100.3",
+            "securityGroups": [
+              {
+                "groupId": "GeneratedFindingSecurityId1",
+                "groupName": "GeneratedFindingSecurityGroupName1"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId2",
+                "groupName": "GeneratedFindingSecurityGroupName2"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId3",
+                "groupName": "GeneratedFindingSecurityGroupName3"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId4",
+                "groupName": "GeneratedFindingSecurityGroupName4"
+              }
+            ],
+            "subnetId": "GeneratedFindingSubnetId3",
+            "vpcId": "vpc-generatedvpcid3"
+          },
+          {
+            "ipv6Addresses": [],
+            "networkInterfaceId": "eni-abcdef03",
+            "privateDnsName": "GeneratedFindingPrivateDnsName4",
+            "privateIpAddress": "203.0.113.42",
+            "privateIpAddresses": [
+              {
+                "privateDnsName": "GeneratedFindingPrivateName1",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName2",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName3",
+                "privateIpAddress": "203.0.113.42"
+              },
+              {
+                "privateDnsName": "GeneratedFindingPrivateName4",
+                "privateIpAddress": "203.0.113.42"
+              }
+            ],
+            "publicDnsName": "GeneratedFindingPublicDNSName4",
+            "publicIp": "198.51.100.4",
+            "securityGroups": [
+              {
+                "groupId": "GeneratedFindingSecurityId1",
+                "groupName": "GeneratedFindingSecurityGroupName1"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId2",
+                "groupName": "GeneratedFindingSecurityGroupName2"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId3",
+                "groupName": "GeneratedFindingSecurityGroupName3"
+              },
+              {
+                "groupId": "GeneratedFindingSecurityId4",
+                "groupName": "GeneratedFindingSecurityGroupName4"
+              }
+            ],
+            "subnetId": "GeneratedFindingSubnetId4",
+            "vpcId": "vpc-generatedvpcid4"
+          }
+        ],
+        "productCodes": [
+          {
+            "code": "GeneratedFindingProductCodeId1",
+            "productType": "marketplace"
+          },
+          {
+            "code": "GeneratedFindingProductCodeId2",
+            "productType": "marketplace"
+          },
+          {
+            "code": "GeneratedFindingProductCodeId3",
+            "productType": "marketplace"
+          },
+          {
+            "code": "GeneratedFindingProductCodeId4",
+            "productType": "marketplace"
+          },
+          {
+            "code": "GeneratedFindingProductCodeId5",
+            "productType": "marketplace"
+          }
+        ],
+        "tags": [
+          {
+            "key": "GeneratedFindingInstaceTag1",
+            "value": "GeneratedFindingInstaceValue1"
+          },
+          {
+            "key": "GeneratedFindingInstaceTag2",
+            "value": "GeneratedFindingInstaceTagValue2"
+          },
+          {
+            "key": "GeneratedFindingInstaceTag3",
+            "value": "GeneratedFindingInstaceTagValue3"
+          },
+          {
+            "key": "GeneratedFindingInstaceTag4",
+            "value": "GeneratedFindingInstaceTagValue4"
+          },
+          {
+            "key": "GeneratedFindingInstaceTag5",
+            "value": "GeneratedFindingInstaceTagValue5"
+          },
+          {
+            "key": "GeneratedFindingInstaceTag6",
+            "value": "GeneratedFindingInstaceTagValue6"
+          },
+          {
+            "key": "GeneratedFindingInstaceTag7",
+            "value": "GeneratedFindingInstaceTagValue7"
+          },
+          {
+            "key": "GeneratedFindingInstaceTag8",
+            "value": "GeneratedFindingInstaceTagValue8"
+          },
+          {
+            "key": "GeneratedFindingInstaceTag9",
+            "value": "GeneratedFindingInstaceTagValue9"
+          }
+        ]
+      },
+      "resourceType": "AccessKey"
     },
+    "schemaVersion": "2.0",
     "service": {
-      "serviceName": "guardduty",
-      "detectorId": "1ab2c3d4e5f60718293a4b5c6d7e8f90",
       "action": {
         "actionType": "AWS_API_CALL",
         "awsApiCallAction": {
-          "api": "ListBuckets",
-          "serviceName": "s3.amazonaws.com",
+          "api": "GeneratedFindingAPIName",
           "callerType": "Remote IP",
+          "errorCode": "AccessDenied",
           "remoteIpDetails": {
-            "ipAddressV4": "198.51.100.253",
-            "organization": {
-              "asn": "64512",
-              "asnOrg": "EXAMPLE-HOSTING",
-              "isp": "Example Hosting",
-              "org": "Example Hosting"
+            "city": {
+              "cityName": "GeneratedFindingCityName"
             },
-            "country": { "countryName": "Netherlands" },
-            "city": { "cityName": "Amsterdam" }
+            "country": {
+              "countryName": "GeneratedFindingCountryName"
+            },
+            "geoLocation": {
+              "lat": 0.0,
+              "lon": 0.0
+            },
+            "ipAddressV4": "198.51.100.0",
+            "ipAddressV6": "1234:5678:90ab:cdef:1234:5678:90ab:cde0",
+            "organization": {
+              "asn": "-1",
+              "asnOrg": "GeneratedFindingASNOrg",
+              "isp": "GeneratedFindingISP",
+              "org": "GeneratedFindingORG"
+            }
           },
+          "serviceName": "GeneratedFindingAPIServiceName",
           "affectedResources": {}
         }
       },
-      "resourceRole": "TARGET",
-      "additionalInfo": { "threatListName": "pac-lab-threat-list" },
-      "eventFirstSeen": "2026-07-28T16:14:52Z",
-      "eventLastSeen": "2026-07-28T16:19:41Z",
+      "evidence": {
+        "threatIntelligenceDetails": [
+          {
+            "threatListName": "GeneratedFindingThreatListName1",
+            "threatNames": [
+              "GeneratedFindingThreatName1",
+              "GeneratedFindingThreatName2",
+              "GeneratedFindingThreatName3",
+              "GeneratedFindingThreatName4"
+            ]
+          },
+          {
+            "threatListName": "GeneratedFindingThreatListName2",
+            "threatNames": [
+              "GeneratedFindingThreatName1",
+              "GeneratedFindingThreatName2",
+              "GeneratedFindingThreatName3",
+              "GeneratedFindingThreatName4"
+            ]
+          },
+          {
+            "threatListName": "GeneratedFindingThreatListName3",
+            "threatNames": [
+              "GeneratedFindingThreatName1",
+              "GeneratedFindingThreatName2",
+              "GeneratedFindingThreatName3",
+              "GeneratedFindingThreatName4"
+            ]
+          },
+          {
+            "threatListName": "GeneratedFindingThreatListName4",
+            "threatNames": [
+              "GeneratedFindingThreatName1",
+              "GeneratedFindingThreatName2",
+              "GeneratedFindingThreatName3",
+              "GeneratedFindingThreatName4"
+            ]
+          }
+        ]
+      },
       "archived": false,
-      "count": 7
+      "count": 1,
+      "detectorId": "00000000000000000000000000000000",
+      "eventFirstSeen": "2026-07-30T19:26:59.000Z",
+      "eventLastSeen": "2026-07-30T19:26:59.000Z",
+      "resourceRole": "TARGET",
+      "serviceName": "guardduty",
+      "additionalInfo": {
+        "value": "{\"apiCalls\":[{\"name\":\"GeneratedFindingAPIName1\",\"count\":2,\"firstSeen\":1513312082,\"lastSeen\":1513312096},{\"name\":\"GeneratedFindingAPIName2\",\"count\":2,\"firstSeen\":1513312081,\"lastSeen\":1513312095},{\"name\":\"GeneratedFindingAPIName3\",\"count\":3,\"firstSeen\":1513312080,\"lastSeen\":1513312094},{\"name\":\"GeneratedFindingAPIName4\",\"count\":4,\"firstSeen\":1513312079,\"lastSeen\":1513312093}],\"sample\":true}",
+        "type": "default"
+      },
+      "featureName": "CloudTrailManagementEvent"
     },
-    "severity": 5,
-    "createdAt": "2026-07-28T16:15:10Z",
-    "updatedAt": "2026-07-28T16:19:55Z",
-    "title": "API ListBuckets was invoked from an IP address on a custom threat list.",
-    "description": "API ListBuckets was invoked using access key AKIAIOSFODNN7EXAMPLE from an IP address on a custom threat list."
+    "severity": 5.0,
+    "title": "The API GeneratedFindingAPIName was invoked from an IP address on a custom threat list.",
+    "type": "UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom",
+    "updatedAt": "2026-07-30T19:26:59.803Z"
   }
 }

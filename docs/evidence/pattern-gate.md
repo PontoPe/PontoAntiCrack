@@ -57,8 +57,10 @@ The fixtures are still derived from documentation — each one says so in its ow
 agree with the service **about these documents**. It does not prove the
 documents match what CloudTrail actually emits.
 
-That is a different question and it is what B3 answers by capturing real
-events. The event-name assumption in particular — that CloudTrail emits
+That is a different question and it is what B3 answered by capturing real
+events — see `fixture-capture.md`. The gate was re-run against the captured
+fixtures and still reports fifteen agreements, which is the run that carries
+the claim. The event-name assumption in particular — that CloudTrail emits
 `DeleteBucketPublicAccessBlock` rather than the API's `DeletePublicAccessBlock`
 — cannot be settled here, because the fixture asserts the very name under
 question. Re-run this gate after the fixtures are replaced; the run that

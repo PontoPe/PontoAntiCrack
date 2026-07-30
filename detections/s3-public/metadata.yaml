@@ -23,4 +23,4 @@ remediation:
     policy without discarding it, which keeps the operator's intent recoverable
     and keeps the policy available as incident-response evidence.
 fixture_status: derived-from-documentation
-fixture_verified_against_live_event: false
+fixture_verified_against_live_event: true

@@ -58,7 +58,9 @@ def test_alert_carries_the_context_needed_to_act(event: Any, plan: Plan) -> None
 
     assert "s3-public" in body
     assert "pac-lab-demo-assets" in body
-    assert "arn:aws:iam::111111111111:user/lab-operator" in body
+    assert (
+        "arn:aws:sts::111111111111:assumed-role/OrganizationAccountAccessRole/lab-operator"
+    ) in body
     assert "203.0.113.42" in body
     assert "public_via=acl" in body
     assert "lab" in payload["text"]

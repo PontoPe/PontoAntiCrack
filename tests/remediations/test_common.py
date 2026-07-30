@@ -46,8 +46,10 @@ def test_non_positive_window_is_rejected() -> None:
 def test_cloudtrail_event_parsing() -> None:
     event = parse(load_event("cloudtrail", "s3-public", "put-bucket-acl-public-read"))
 
-    assert event.principal.arn == "arn:aws:iam::111111111111:user/lab-operator"
-    assert event.principal.name == "lab-operator"
+    assert event.principal.arn == (
+        "arn:aws:sts::111111111111:assumed-role/OrganizationAccountAccessRole/lab-operator"
+    )
+    assert event.principal.name == "OrganizationAccountAccessRole"
     assert event.source_ip == "203.0.113.42"
     assert event.region == "sa-east-1"
     assert not event.principal.is_root
@@ -56,7 +58,7 @@ def test_cloudtrail_event_parsing() -> None:
 def test_assumed_role_principal_name_comes_from_the_role_not_the_session() -> None:
     event = parse(load_event("cloudtrail", "s3-public", "put-bucket-policy-wildcard-principal"))
 
-    assert event.principal.name == "lab-deploy"
+    assert event.principal.name == "OrganizationAccountAccessRole"
 
 
 def test_guardduty_event_parsing() -> None:

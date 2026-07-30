@@ -1,50 +1,47 @@
 {
   "_pac_fixture": {
-    "status": "derived-from-documentation",
-    "verified_against_live_event": false,
-    "source": "AWS S3 API reference for PutBucketPolicy. Note that CloudTrail records the policy document as a JSON string inside bucketPolicy, which is one of the details most likely to differ from this fixture.",
-    "capture": "In the lab account: aws s3api put-bucket-policy --bucket <lab-bucket> --policy file://public.json --profile lab"
+    "status": "verified",
+    "verified_against_live_event": true,
+    "source": "Captured from CloudTrail in the awlz-lab account on 2026-07-30 and sanitized: account IDs, access key IDs, principal IDs, bucket names, security group and VPC IDs and source addresses are replaced. Every field the pattern reads is exactly what CloudTrail delivered.",
+    "capture": "aws s3api put-bucket-policy --bucket <lab-bucket> --policy file://public.json"
   },
   "version": "0",
-  "id": "c8a2f1e5-1a5d-4c3b-8d1c-7b2e3f4a5b6c",
+  "id": "1a5ea987-ec8f-4c3f-9bc5-b7f7f52991c4",
   "detail-type": "AWS API Call via CloudTrail",
   "source": "aws.s3",
   "account": "111111111111",
-  "time": "2026-07-28T14:06:44Z",
+  "time": "2026-07-30T19:26:47Z",
   "region": "sa-east-1",
   "resources": [],
   "detail": {
-    "eventVersion": "1.09",
+    "eventVersion": "1.11",
     "userIdentity": {
       "type": "AssumedRole",
-      "principalId": "AROAEXAMPLEEXAMPLE02:build",
-      "arn": "arn:aws:sts::111111111111:assumed-role/lab-deploy/build",
+      "principalId": "AROAEXAMPLEEXAMPLE01:pac-lab-demo-assets",
+      "arn": "arn:aws:sts::111111111111:assumed-role/OrganizationAccountAccessRole/lab-operator",
       "accountId": "111111111111",
       "accessKeyId": "ASIAIOSFODNN7EXAMPLE",
       "sessionContext": {
         "sessionIssuer": {
           "type": "Role",
-          "principalId": "AROAEXAMPLEEXAMPLE02",
-          "arn": "arn:aws:iam::111111111111:role/lab-deploy",
+          "principalId": "AROAEXAMPLEEXAMPLE01",
+          "arn": "arn:aws:iam::111111111111:role/OrganizationAccountAccessRole",
           "accountId": "111111111111",
-          "userName": "lab-deploy"
+          "userName": "OrganizationAccountAccessRole"
         },
         "attributes": {
-          "creationDate": "2026-07-28T13:55:02Z",
+          "creationDate": "2026-07-30T19:26:40Z",
           "mfaAuthenticated": "false"
         }
       }
     },
-    "eventTime": "2026-07-28T14:06:44Z",
+    "eventTime": "2026-07-30T19:26:47Z",
     "eventSource": "s3.amazonaws.com",
     "eventName": "PutBucketPolicy",
     "awsRegion": "sa-east-1",
-    "sourceIPAddress": "198.51.100.17",
-    "userAgent": "[aws-sdk-go/1.55.5 (go1.22.5; linux; amd64)]",
+    "sourceIPAddress": "203.0.113.42",
+    "userAgent": "[aws-cli/2.36.9 md/awscrt#0.36.0 ua/2.1 os/windows#11 md/arch#amd64 lang/python#3.14.6 md/pyimpl#CPython m/AN,Z,W,g,E,b cfg/retry-mode#standard md/installer#exe sid/5ba8814870e4 md/prompt#off md/command#s3api.put-bucket-policy]",
     "requestParameters": {
-      "bucketName": "pac-lab-demo-assets",
-      "Host": "pac-lab-demo-assets.s3.sa-east-1.amazonaws.com",
-      "policy": "",
       "bucketPolicy": {
         "Version": "2012-10-17",
         "Statement": [
@@ -56,15 +53,38 @@
             "Resource": "arn:aws:s3:::pac-lab-demo-assets/*"
           }
         ]
-      }
+      },
+      "bucketName": "pac-lab-demo-assets",
+      "Host": "pac-lab-demo-assets.s3.sa-east-1.amazonaws.com",
+      "policy": ""
     },
     "responseElements": null,
-    "requestID": "P5R7N4T9F8Q2K1M3",
-    "eventID": "9d3d9f7b-4c3a-4b2f-8e8d-2a3b4c5d6e7f",
+    "additionalEventData": {
+      "SignatureVersion": "SigV4",
+      "CipherSuite": "TLS_AES_128_GCM_SHA256",
+      "bytesTransferredIn": 183,
+      "AuthenticationMethod": "AuthHeader",
+      "x-amz-id-2": "sXQlm4CmV1rr7Ow2CfhNpQH4E3thQ71OvaHAoDArRSqiR9eGo+HvieflOv2yH3/5oJV9KUvu4BGnjTF6LpvalCa2V+Q2fMoz",
+      "bytesTransferredOut": 0
+    },
+    "requestID": "M6EWKXHS750J2AC5",
+    "eventID": "1a5ea987-ec8f-4c3f-9bc5-b7f7f52991c4",
     "readOnly": false,
+    "resources": [
+      {
+        "accountId": "111111111111",
+        "type": "AWS::S3::Bucket",
+        "ARN": "arn:aws:s3:::pac-lab-demo-assets"
+      }
+    ],
     "eventType": "AwsApiCall",
     "managementEvent": true,
     "recipientAccountId": "111111111111",
-    "eventCategory": "Management"
+    "eventCategory": "Management",
+    "tlsDetails": {
+      "tlsVersion": "TLSv1.3",
+      "cipherSuite": "TLS_AES_128_GCM_SHA256",
+      "clientProvidedHostHeader": "pac-lab-demo-assets.s3.sa-east-1.amazonaws.com"
+    }
   }
 }

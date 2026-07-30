@@ -1,45 +1,48 @@
 {
   "_pac_fixture": {
-    "status": "derived-from-documentation",
-    "verified_against_live_event": false,
-    "negative": "The call failed. IAM already stopped this attacker, the bucket never changed, and there is nothing to remediate. Waking a Lambda for every AccessDenied is how a detection becomes a cost centre.",
-    "source": "CloudTrail error-record shape: errorCode and errorMessage present, responseElements null.",
-    "capture": "In the lab account, call PutBucketAcl with a principal that lacks s3:PutBucketAcl."
+    "status": "verified",
+    "verified_against_live_event": true,
+    "source": "Captured from CloudTrail in the awlz-lab account on 2026-07-30 and sanitized: account IDs, access key IDs, principal IDs, bucket names, security group and VPC IDs and source addresses are replaced. Every field the pattern reads is exactly what CloudTrail delivered.",
+    "capture": "aws s3api put-bucket-acl --bucket <lab-bucket> --acl public-read, as a role with no S3 write permission"
   },
   "version": "0",
-  "id": "f1d5c4b8-4d80-4f6e-b04f-ae5b6c7d8e9f",
+  "id": "d2eb94df-06ee-4bd9-9cb8-ab2988e14d52",
   "detail-type": "AWS API Call via CloudTrail",
   "source": "aws.s3",
   "account": "111111111111",
-  "time": "2026-07-28T14:19:58Z",
+  "time": "2026-07-30T19:28:08Z",
   "region": "sa-east-1",
   "resources": [],
   "detail": {
-    "eventVersion": "1.09",
+    "eventVersion": "1.11",
     "userIdentity": {
       "type": "AssumedRole",
-      "principalId": "AROAEXAMPLEEXAMPLE03:intruder",
-      "arn": "arn:aws:sts::111111111111:assumed-role/lab-readonly/intruder",
+      "principalId": "AROAEXAMPLEEXAMPLE01:pac-lab-demo-assets",
+      "arn": "arn:aws:sts::111111111111:assumed-role/lab-denied-probe/lab-operator",
       "accountId": "111111111111",
       "accessKeyId": "ASIAIOSFODNN7EXAMPLE",
       "sessionContext": {
         "sessionIssuer": {
           "type": "Role",
-          "principalId": "AROAEXAMPLEEXAMPLE03",
-          "arn": "arn:aws:iam::111111111111:role/lab-readonly",
+          "principalId": "AROAEXAMPLEEXAMPLE01",
+          "arn": "arn:aws:iam::111111111111:role/lab-operator",
           "accountId": "111111111111",
-          "userName": "lab-readonly"
+          "userName": "lab-operator"
+        },
+        "attributes": {
+          "creationDate": "2026-07-30T19:28:07Z",
+          "mfaAuthenticated": "false"
         }
       }
     },
-    "eventTime": "2026-07-28T14:19:58Z",
+    "eventTime": "2026-07-30T19:28:08Z",
     "eventSource": "s3.amazonaws.com",
     "eventName": "PutBucketAcl",
     "awsRegion": "sa-east-1",
-    "sourceIPAddress": "192.0.2.200",
-    "userAgent": "[aws-cli/2.36.9 Python/3.12.6 Linux/6.8.0 exe/x86_64.ubuntu.24]",
+    "sourceIPAddress": "203.0.113.42",
+    "userAgent": "[aws-cli/2.36.9 md/awscrt#0.36.0 ua/2.1 os/windows#11 md/arch#amd64 lang/python#3.14.6 md/pyimpl#CPython m/AN,Z,W,g,E,b cfg/retry-mode#standard md/installer#exe sid/5ba8814870e4 md/prompt#off md/command#s3api.put-bucket-acl]",
     "errorCode": "AccessDenied",
-    "errorMessage": "User: arn:aws:sts::111111111111:assumed-role/lab-readonly/intruder is not authorized to perform: s3:PutBucketAcl",
+    "errorMessage": "User: arn:aws:sts::111111111111:assumed-role/lab-denied-probe/lab-operator is not authorized to perform: s3:PutBucketAcl on resource: \"arn:aws:s3:::pac-lab-demo-assets\" because public ACLs are prevented by the BlockPublicAcls setting in S3 Block Public Access.",
     "requestParameters": {
       "bucketName": "pac-lab-demo-assets",
       "Host": "pac-lab-demo-assets.s3.sa-east-1.amazonaws.com",
@@ -47,12 +50,32 @@
       "x-amz-acl": "public-read"
     },
     "responseElements": null,
-    "requestID": "T9F8Q2K1M3P5R7N4",
-    "eventID": "c1602cae-7f6d-4e5c-b1b0-5d6e7f809102",
+    "additionalEventData": {
+      "SignatureVersion": "SigV4",
+      "CipherSuite": "TLS_AES_128_GCM_SHA256",
+      "bytesTransferredIn": 0,
+      "AuthenticationMethod": "AuthHeader",
+      "x-amz-id-2": "VoTLSV8AaFvC2k9mfdkA8GFCwJBDEKRDAc43SDdcHz7scmVb9X95TUCnXEKbpcQOGq37XVEiw2GWn8C0qLNHi2ljcl5pXIAB",
+      "bytesTransferredOut": 532
+    },
+    "requestID": "N7ZMC4AJANEPP37T",
+    "eventID": "d2eb94df-06ee-4bd9-9cb8-ab2988e14d52",
     "readOnly": false,
+    "resources": [
+      {
+        "accountId": "111111111111",
+        "type": "AWS::S3::Bucket",
+        "ARN": "arn:aws:s3:::pac-lab-demo-assets"
+      }
+    ],
     "eventType": "AwsApiCall",
     "managementEvent": true,
     "recipientAccountId": "111111111111",
-    "eventCategory": "Management"
+    "eventCategory": "Management",
+    "tlsDetails": {
+      "tlsVersion": "TLSv1.3",
+      "cipherSuite": "TLS_AES_128_GCM_SHA256",
+      "clientProvidedHostHeader": "pac-lab-demo-assets.s3.sa-east-1.amazonaws.com"
+    }
   }
 }

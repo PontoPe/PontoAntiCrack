@@ -232,8 +232,10 @@ def test_audit_record_carries_the_investigative_context(
     execute(StubDetection(), raw_event, make_config(), aws, notifier)
 
     item = _audit_items(audit_table)[0]
-    assert item["principal_arn"] == "arn:aws:iam::111111111111:user/lab-operator"
+    assert item["principal_arn"] == (
+        "arn:aws:sts::111111111111:assumed-role/OrganizationAccountAccessRole/lab-operator"
+    )
     assert item["source_ip"] == "203.0.113.42"
     assert item["account_id"] == "111111111111"
     assert item["region"] == "sa-east-1"
-    assert item["event_id"] == "8c2c8e6a-3b2f-4a1e-9d7c-1f2e3d4c5b6a"
+    assert item["event_id"] == raw_event["detail"]["eventID"]

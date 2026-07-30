@@ -10,7 +10,19 @@ from remediations.iam_key_leak.handler import IamKeyLeak
 from tests.conftest import load_event, seed_iam_user
 
 DETECTION = IamKeyLeak()
-USER = "lab-ci-publisher"
+
+# The handler resolves the IAM user from the finding, so the seeded user has to
+# be whatever the captured finding names. Hard-coding it here was fine while the
+# fixtures were written by hand and became wrong the moment they were real.
+# The captured findings decide which one exercises which branch. The
+# MaliciousIPCaller sample carries userType AWSService and the
+# InstanceCredentialExfiltration sample carries IAMUser, which is the opposite
+# of what the hand-written fixtures assumed.
+ACTIONABLE = "credential-exfiltration-assumed-role"
+_SAMPLE = load_event("guardduty", "iam-key-leak", ACTIONABLE)
+USER = _SAMPLE["detail"]["resource"]["accessKeyDetails"]["userName"]
+_ACTION = _SAMPLE["detail"]["service"]["action"]["awsApiCallAction"]
+SOURCE_IP = _ACTION["remoteIpDetails"]["ipAddressV4"]
 
 
 def _event(fixture: str, access_key_id: str | None = None) -> Any:
@@ -30,7 +42,7 @@ def _status(aws: AwsClients, user: str, key_id: str) -> str:
 def test_active_user_key_produces_a_plan(aws: AwsClients) -> None:
     key_id = seed_iam_user(aws, USER, tags={"owner": "platform"})
 
-    plan = DETECTION.plan(_event("unauthorized-access-malicious-ip-caller", key_id), aws)
+    plan = DETECTION.plan(_event(ACTIONABLE, key_id), aws)
 
     assert plan is not None
     assert plan.resource_id == key_id
@@ -42,7 +54,7 @@ def test_apply_deactivates_and_does_not_delete(aws: AwsClients) -> None:
     """Deleting the key would take GetAccessKeyLastUsed with it, and that record
     is often the only evidence of what the attacker actually reached."""
     key_id = seed_iam_user(aws, USER)
-    plan = DETECTION.plan(_event("unauthorized-access-malicious-ip-caller", key_id), aws)
+    plan = DETECTION.plan(_event(ACTIONABLE, key_id), aws)
     assert plan is not None
 
     actions = DETECTION.apply(plan, aws)
@@ -54,12 +66,12 @@ def test_apply_deactivates_and_does_not_delete(aws: AwsClients) -> None:
 def test_snapshot_captures_last_used_before_deactivation(aws: AwsClients) -> None:
     key_id = seed_iam_user(aws, USER)
 
-    plan = DETECTION.plan(_event("unauthorized-access-malicious-ip-caller", key_id), aws)
+    plan = DETECTION.plan(_event(ACTIONABLE, key_id), aws)
 
     assert plan is not None
     assert "access_key_last_used" in plan.snapshot
     assert plan.snapshot["access_key_metadata"]["Status"] == "Active"
-    assert plan.snapshot["guardduty_finding"]["severity"] == 5
+    assert plan.snapshot["guardduty_finding"]["severity"] == _SAMPLE["detail"]["severity"]
 
 
 def test_already_inactive_key_produces_no_plan(aws: AwsClients) -> None:
@@ -67,7 +79,7 @@ def test_already_inactive_key_produces_no_plan(aws: AwsClients) -> None:
     key_id = seed_iam_user(aws, USER)
     aws.iam.update_access_key(UserName=USER, AccessKeyId=key_id, Status="Inactive")
 
-    assert DETECTION.plan(_event("unauthorized-access-malicious-ip-caller", key_id), aws) is None
+    assert DETECTION.plan(_event(ACTIONABLE, key_id), aws) is None
 
 
 def test_root_credentials_are_escalated_never_acted_on(aws: AwsClients) -> None:
@@ -86,8 +98,14 @@ def test_root_credentials_are_escalated_never_acted_on(aws: AwsClients) -> None:
 def test_assumed_role_session_is_escalated(aws: AwsClients) -> None:
     """GuardDuty reports resourceType AccessKey even for temporary credentials.
     UpdateAccessKey cannot act on those, and pretending otherwise would produce
-    a confident APPLIED for a remediation that never happened."""
-    plan = DETECTION.plan(_event("credential-exfiltration-assumed-role"), aws)
+    a confident APPLIED for a remediation that never happened.
+
+    No captured sample carries userType AssumedRole, so the branch is exercised
+    by flipping that one field on a real finding. The mutation is visible here
+    rather than frozen into a fixture that claims to be captured."""
+    raw = load_event("guardduty", "iam-key-leak", ACTIONABLE)
+    raw["detail"]["resource"]["accessKeyDetails"]["userType"] = "AssumedRole"
+    plan = DETECTION.plan(event_parser.parse(raw), aws)
 
     assert plan is not None
     assert plan.intended_actions == ()
@@ -95,8 +113,19 @@ def test_assumed_role_session_is_escalated(aws: AwsClients) -> None:
     assert ":role/" in plan.resource_arn
 
 
+def test_service_principal_key_is_escalated(aws: AwsClients) -> None:
+    """The MaliciousIPCaller sample is issued against an AWS service principal.
+    UpdateAccessKey has nothing to act on, so the handler must escalate rather
+    than invent a target — a branch the hand-written fixtures never reached."""
+    plan = DETECTION.plan(_event("unauthorized-access-malicious-ip-caller"), aws)
+
+    assert plan is not None
+    assert plan.intended_actions == ()
+    assert "does not know how to act on safely" in plan.reason
+
+
 def test_finding_without_an_access_key_produces_no_plan(aws: AwsClients) -> None:
-    raw = load_event("guardduty", "iam-key-leak", "unauthorized-access-malicious-ip-caller")
+    raw = load_event("guardduty", "iam-key-leak", ACTIONABLE)
     raw["detail"]["resource"]["accessKeyDetails"] = {}
 
     assert DETECTION.plan(event_parser.parse(raw), aws) is None
@@ -104,10 +133,10 @@ def test_finding_without_an_access_key_produces_no_plan(aws: AwsClients) -> None
 
 def test_source_ip_comes_from_the_guardduty_action(aws: AwsClients) -> None:
     key_id = seed_iam_user(aws, USER)
-    event = _event("unauthorized-access-malicious-ip-caller", key_id)
+    event = _event(ACTIONABLE, key_id)
 
-    assert event.source_ip == "198.51.100.253"
+    assert event.source_ip == SOURCE_IP
 
     plan = DETECTION.plan(event, aws)
     assert plan is not None
-    assert "198.51.100.253" in plan.reason
+    assert SOURCE_IP in plan.reason
