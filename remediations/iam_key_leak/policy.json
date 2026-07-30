@@ -6,7 +6,6 @@
       "Effect": "Allow",
       "Action": [
         "iam:GetAccessKeyLastUsed",
-        "iam:GetUser",
         "iam:ListAccessKeys",
         "iam:ListUserTags"
       ],

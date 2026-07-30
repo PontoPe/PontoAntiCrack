@@ -6,9 +6,7 @@
       "Effect": "Allow",
       "Action": [
         "ec2:DescribeNetworkInterfaces",
-        "ec2:DescribeSecurityGroupRules",
-        "ec2:DescribeSecurityGroups",
-        "ec2:DescribeTags"
+        "ec2:DescribeSecurityGroups"
       ],
       "Resource": "*"
     },
