@@ -78,19 +78,36 @@ root credential finding is escalated and never acted on. The pipeline invariants
 hold: the snapshot survives a failed remediation, dry-run changes nothing, the
 circuit breaker stops a storm, an alert never carries credential material.
 
+**Proven since 2026-07-30:**
+
+- **EventBridge itself agrees with every pattern on every fixture.** `make
+  patterns` replays all fifteen through `aws events test-event-pattern`;
+  `docs/evidence/pattern-gate.md`. That closes the ADR-010 limitation: the local
+  reimplementation in `tests/support/eventbridge.py` and the service return the
+  same verdict on all fifteen.
+- **Fourteen of the fifteen fixtures are recorded events**, captured in the lab
+  account from real API calls and sanitized;
+  `docs/evidence/fixture-capture.md`. The assumption flagged as highest-risk
+  held: CloudTrail emits `DeleteBucketPublicAccessBlock`, not the API's
+  `DeletePublicAccessBlock`. Real events corrected five assumptions the tests
+  around the patterns had encoded.
+
 **Not proven:**
 
-- **The fixtures are derived from AWS documentation, not captured from real
-  events.** So the tests prove internal consistency, not agreement with AWS.
-  Every fixture carries a `_pac_fixture` marker saying so, and
-  `tests/test_fixture_provenance.py` fails CI if a marker goes missing or
-  contradicts its detection's metadata.
-- **The pattern evaluator in `tests/support/eventbridge.py` is a
-  reimplementation** of the EventBridge pattern language. It proves the pattern
-  says what its author meant; it does not prove EventBridge agrees. Confirming
-  that is one `aws events test-event-pattern` call per pattern.
-- **No technique has been detonated.** `docs/evidence/` is empty and stays empty
-  until something is actually measured.
+- **The root-credential fixture is still documentation-derived**, so
+  `detections/iam-key-leak/metadata.yaml` still says
+  `fixture_verified_against_live_event: false`. GuardDuty sample findings always
+  carry a placeholder principal and none can be issued against the account root;
+  capturing it honestly would mean manufacturing a root compromise.
+- **The captured GuardDuty findings are service-generated samples.** Their type,
+  severity and resource shape are exactly what GuardDuty emits, which is what
+  the pattern reads, but no real compromise produced them.
+- **No technique has been detonated and no remediation has run against a real
+  resource.** The three Lambdas exist but are not wired to EventBridge: the
+  account's regional Lambda concurrency quota is 10, and three functions
+  reserving 5 each plus the 10 unreserved executions AWS enforces needs 25. A
+  request for the self-service minimum of 1000 is open. Until it lands, no
+  latency has been measured and `docs/evidence/` says so.
 
 The capture procedure for each fixture, and the order to apply and verify in, is
 in [docs/session-report.md](docs/session-report.md).

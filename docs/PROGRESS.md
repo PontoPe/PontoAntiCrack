@@ -4,18 +4,23 @@ Updated: 2026-07-30
 
 ## Current step
 
-**B2 is not blocked and has not been run.** It calls `aws events test-event-pattern`,
-which needs credentials and nothing else — no Lambda, no rule, no completed
-apply. `make patterns` now runs all three patterns against all fifteen
-fixtures and fails on the first disagreement with the service. Run it as soon
-as there is an AWS session; it is where the three load-bearing assumptions
-about CloudTrail event shape are actually settled.
+**B2 and B3 are done. B4 onward waits on the Lambda concurrency quota.**
 
-B1 remains blocked on the Lambda account quota. The partial state is reconciled
-and stable, but the account rejected reserved concurrency `5` on each Lambda
-because its regional concurrent-execution quota is `10` and Lambda requires at
-least `10` unreserved executions. No attack technique was detonated. The saved
-plan used for that partial apply is invalid and must not be reused.
+- `make patterns`: fifteen fixtures, zero disagreements with EventBridge. Run
+  first against the documentation-derived fixtures, then again against the
+  captured ones. `docs/evidence/pattern-gate.md`.
+- Fourteen fixtures are recorded events captured in `awlz-lab`; every resource
+  used was created and deleted in the same run. The highest-risk assumption
+  held: CloudTrail emits `DeleteBucketPublicAccessBlock`, not
+  `DeletePublicAccessBlock`. `docs/evidence/fixture-capture.md`.
+- The root-credential fixture stays documentation-derived and
+  `detections/iam-key-leak/metadata.yaml` still says
+  `fixture_verified_against_live_event: false`.
+- 172 tests pass. Five of them changed because real events disagreed with
+  hand-written ones; none of the disagreements was a pattern defect.
+- Quota request `L-B99A9384` → 1000 in `sa-east-1` is `CASE_OPENED`; applied
+  value is still 10. Until it lands, no EventBridge target can be created, so
+  nothing can be detonated.
 
 ## Commands attempted
 

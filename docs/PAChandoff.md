@@ -1,7 +1,7 @@
 # Handoff — PontoAntiCrack
 
-Written 2026-07-29. Entry point for anyone — or any session — picking this up
-cold. Everything below is current as of commit `af6d5be` on `main`.
+Written 2026-07-29, current as of **2026-07-30**. Entry point for anyone — or
+any session — picking this up cold.
 
 If you read one other file after this one, read
 [session-report.md](session-report.md) §3 and §4.
@@ -16,12 +16,24 @@ for both what it catches and what it must not catch.
 
 The thing that makes this worth showing to anyone is not that the detections
 exist. It is that they have tests, and that they will have been proven by
-detonating the real technique. The first half is done. **The second half is not
-started.**
+detonating the real technique.
 
-**Current state: fully written, locally validated, never applied to AWS.** No
-`terraform plan` has run. No technique has been detonated. Every event fixture
-was written from AWS documentation rather than captured from a real event.
+**Current state: applied to AWS in part, patterns confirmed by the service,
+fixtures captured from real events, nothing detonated.**
+
+- The three Lambdas exist in `awlz-lab` with `dry_run = true`. They are **not
+  wired to EventBridge**: the account's regional Lambda concurrency quota is 10,
+  and three functions reserving 5 each plus the 10 unreserved executions AWS
+  enforces needs 25. A request for 1000 — the lowest value Service Quotas
+  accepts — is open as a support case.
+- `make patterns` replays all fifteen fixtures through
+  `aws events test-event-pattern`: fifteen agreements, zero disagreements. That
+  closes ADR-010's limitation.
+- Fourteen of fifteen fixtures are now recorded events captured in the lab. The
+  root-credential one stays documentation-derived, because GuardDuty sample
+  findings always carry a placeholder principal.
+- No technique has been detonated and no remediation has touched a real
+  resource, because that needs the wiring the quota blocks.
 
 Nothing about that is hidden — it is marked in the fixtures, in the detection
 metadata, in the README, in the threat model, and enforced by a test that fails
@@ -35,18 +47,18 @@ if the markers stop being accurate.
 |---|---|---|
 | Detections | 3 | `s3-public`, `iam-key-leak`, `sg-open` |
 | Terraform files | 14 | Root stack + one reusable `detection` module |
-| Event fixtures | 15 | **All documentation-derived. None verified.** |
-| Tests | 167 | All passing |
+| Event fixtures | 15 | **14 captured from real events; 1 documentation-derived** |
+| Tests | 172 | All passing |
 | ADRs | 15 | `docs/architecture.md` |
-| Detonations run | 0 | — |
-| Evidence artefacts | 0 | `docs/evidence/` empty, correctly |
+| Detonations run | 0 | blocked on the Lambda concurrency quota |
+| Evidence artefacts | 2 | `pattern-gate.md`, `fixture-capture.md` |
 
-### Verification, as of `af6d5be`
+### Verification, as of `c101ce8`
 
 Run on Windows 11 / PowerShell 7 with the toolchain in §7:
 
 ```
-pytest                          167 passed
+pytest                          172 passed
 ruff check                      All checks passed!
 ruff format --check             54 files already formatted
 mypy --strict                   Success: no issues found in 22 source files
@@ -57,6 +69,7 @@ trivy config infra              0 misconfigurations, 0 suppressions
 checkov -d infra                76 passed, 0 failed, 6 skipped
 check-detection-coverage.sh     all detections complete
 shellcheck -S warning           clean
+make patterns                   15 fixtures, 0 disagreements with the service
 ```
 
 Reproduce all of it with `make lint && make test && make coverage && make validate`
@@ -87,7 +100,7 @@ d794d14 feat(notifier): add Slack alerting with context, dedup, and redaction
 This distinction is the whole point of the repository, so it gets stated
 plainly rather than implied.
 
-### Proven by the 167 tests
+### Proven by the 172 tests
 
 - Each pattern matches the events its author intended.
 - Each pattern **rejects** the plausible-but-benign near-miss: a read-only
@@ -105,18 +118,33 @@ plainly rather than implied.
   too, a self-triggered event is dropped, an alert never carries credential
   material.
 
+### Proven against AWS on 2026-07-30
+
+- **EventBridge agrees with every pattern on every fixture.** The local
+  evaluator in `tests/support/eventbridge.py` and the service returned the same
+  verdict fifteen times, which is what ADR-010 said was missing.
+- **The fixtures are real events.** Fourteen were captured in `awlz-lab` from
+  API calls against resources created and deleted in the same run. The
+  assumption flagged as highest-risk held: CloudTrail emits
+  `DeleteBucketPublicAccessBlock`, not the API's `DeletePublicAccessBlock`.
+- Real events corrected five assumptions the tests around the patterns had
+  encoded — principal shape, two GuardDuty `userType` values, one severity, and
+  a benign call that turns out to come from Access Analyzer.
+  `docs/evidence/fixture-capture.md` lists them.
+
 ### Not proven
 
-1. **The fixtures are documentation-derived.** The tests prove internal
-   consistency, not agreement with AWS. This is the gap that matters most.
-2. **The pattern evaluator is a reimplementation.** `tests/support/eventbridge.py`
-   implements the subset of the EventBridge pattern language in use, because the
-   authoritative evaluator is an AWS API call and this session made none. It
-   raises rather than guessing on anything outside that subset, and has its own
-   tests — but a green detection test means "the pattern says what I meant", not
-   "EventBridge agrees". (ADR-010.)
+1. **The root-credential fixture is documentation-derived**, so
+   `detections/iam-key-leak/metadata.yaml` still says
+   `fixture_verified_against_live_event: false`. No GuardDuty sample can be
+   issued against the account root, and manufacturing a root compromise to
+   capture one is not a reasonable trade.
+2. **The captured GuardDuty findings are service-generated samples.** Type,
+   severity and resource shape are exactly what the service emits — which is
+   what the pattern reads — but no real compromise produced them.
 3. **Nothing has been detonated.** No latency measured, no false-positive rate
-   observed, no remediation has touched a real resource.
+   observed, no remediation has touched a real resource. This is blocked on the
+   Lambda concurrency quota, not on work.
 
 ### The three assumptions that are load-bearing
 
@@ -145,19 +173,23 @@ the Lambda concurrency quota that currently blocks the wiring. Run it first.
 Condensed from [session-report.md](session-report.md) §4, which has the
 verification detail for each step.
 
-| # | Step | Stop if |
-|---|---|---|
-| 0 | [AwLZ](../../AwLZ) applied through `modules/logging`; org trail delivering, GuardDuty on in the lab account | It isn't — this repo consumes that trail |
-| 1 | `make build` | `build/lambda/` is missing `remediations/` or `notifier/` |
-| 2 | `cp infra/example.tfvars infra/terraform.tfvars`, set `account_id` + `environment = "lab"`, **leave `dry_run = true`**, then `terraform plan` | The plan shows fewer than 3 IAM roles, or `PAC_DRY_RUN` is not `"true"`, or a `secret_string` appears on the secret |
-| 3 | `make patterns` — all three patterns against all fifteen fixtures. Runnable before the apply completes | **Any positive fixture returns `false`, or any `benign-*` returns `true`** |
-| 4 | `aws secretsmanager put-secret-value` for the webhook | `terraform show \| grep hooks.slack` returns anything |
-| 5 | Trigger one benign event; confirm invocation, Slack alert, `DRY_RUN` audit item with a full snapshot, **and that the resource is unchanged** | The resource changed. Dry-run means dry-run |
-| 6 | Capture the real events, replace all 15 fixtures, flip the provenance markers, `make test` | — |
-| 7 | Detonate with `dry_run` still true | — |
-| 8 | `dry_run = false`, **lab only**, re-detonate, `make timing` | — |
-| 9 | Deliberately trip the circuit breaker and watch it hold | It doesn't. A control never observed working is a comment |
-| 10 | Consider dev/prod — with `dry_run = true` for a week of real traffic first | The false-positive rate is unknown |
+Steps 0 through 3 and step 6 are **done** as of 2026-07-30 and are kept here so
+the order still reads straight. The next open step is 4.
+
+| # | Step | State | Stop if |
+|---|---|---|---|
+| 0 | [AwLZ](../../AwLZ) applied through `modules/logging`; org trail delivering, GuardDuty on in the lab account | ✅ | It isn't — this repo consumes that trail |
+| 1 | `make build` | ✅ | `build/lambda/` is missing `remediations/` or `notifier/` |
+| 2 | `terraform plan` with `dry_run = true`, then apply | ⚠️ partial — three Lambdas exist, no EventBridge target does | The plan shows fewer than 3 IAM roles, or `PAC_DRY_RUN` is not `"true"`, or a `secret_string` appears on the secret |
+| 3 | `make patterns` — all three patterns against all fifteen fixtures | ✅ 15/15 | **Any positive fixture returns `false`, or any `benign-*` returns `true`** |
+| 6 | Capture the real events, replace the fixtures, flip the provenance markers, `make test` | ✅ 14 of 15 | — |
+| — | **Lambda concurrency quota reaches 25** | ⏳ request for 1000 open as a support case | Service Quotas refuses; it will not accept a value below the formal default |
+| 4 | `aws secretsmanager put-secret-value` for the webhook | open | `terraform show \| grep hooks.slack` returns anything |
+| 5 | Trigger one benign event; confirm invocation, Slack alert, `DRY_RUN` audit item with a full snapshot, **and that the resource is unchanged** | open | The resource changed. Dry-run means dry-run |
+| 7 | Detonate with `dry_run` still true | open | — |
+| 8 | `dry_run = false`, **lab only**, re-detonate, `make timing` | open | — |
+| 9 | Deliberately trip the circuit breaker and watch it hold | open | It doesn't. A control never observed working is a comment |
+| 10 | Consider dev/prod — with `dry_run = true` for a week of real traffic first | open | The false-positive rate is unknown |
 
 **Do not go past step 5 into step 8 without doing step 6.** Turning on
 remediation while the patterns are unconfirmed means a system that might not
