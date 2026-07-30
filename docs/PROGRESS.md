@@ -1,81 +1,74 @@
-# PAC apply and EventBridge pattern gate
+# PAC live validation progress
 
 Updated: 2026-07-30
 
 ## Current step
 
-B1/B2 is paused after a successful second Terraform plan review. The saved
-`infra/tfplan` is ready for an operator decision. No PAC resources were applied
-and no attack technique was detonated.
+B1/B2 is paused after a partial Terraform apply. The account accepted the PAC
+resources but rejected reserved concurrency `5` on each Lambda because its
+regional concurrent-execution quota is `10` and Lambda requires at least `10`
+unreserved executions. No attack technique was detonated. The saved plan used
+for that partial apply is invalid and must not be reused.
 
 ## Commands attempted
 
-- Read `AGENTS.md`, `docs/PAChandoff.md`, `docs/session-report.md` section 4,
-  `docs/threat-model.md`, and the TrustStack prompt.
-- `git status --short --branch`
-- `git log --oneline -10`
-- `aws configure list-profiles`
-- Inspected the PAC provider guard, ignored variable-file convention, and the
-  documented AwLZ member-account role path.
-- Verified the live management caller, assumed
-  `OrganizationAccountAccessRole` into `awlz-lab`, and made read-only
-  CloudTrail and GuardDuty prerequisite calls.
-- `make build`
-- `ruff check`, `ruff format --check`, `mypy`, `pytest`, the detection coverage
-  guard, `terraform fmt`, `terraform validate`, `tflint`, `trivy`, `checkov`,
-  and `shellcheck`
-- Configured a local-only `pac-lab` role profile sourced from the existing
-  `mgmt` IAM Identity Center profile. No static credential was created.
-- Created ignored `infra/terraform.tfvars` and `infra/backend.hcl`.
-- `terraform init -reconfigure -backend-config=backend.hcl`
-- `terraform plan -out=tfplan`
-- Inspected the saved plan as JSON for action type, resource cardinality,
-  dry-run wiring, secret handling, deletion protection, and detection-specific
-  IAM actions.
-- Continued from commit `b411565`.
-- Removed the five unused detection-policy reads identified by the first plan
-  review.
-- Added `tests/test_policy_least_privilege.py`, which parses each handler's AST
-  and requires exact equality between its AWS SDK calls and the policy's
-  `Allow` actions.
-- Re-ran `make build` and every local gate.
-- Replaced the previous ignored `infra/tfplan` with a newly generated plan
-  after reconfirming the `pac-lab` caller and the local dry-run inputs.
-- Re-inspected the new saved plan as JSON, including detection and runtime IAM
-  actions, resource references, managed-policy attachments, tags, secret
-  resources, and all planned action types.
+- Read the autonomous-owner prompt and all required PAC handoff documents.
+- Reconfirmed `OrganizationAccountAccessRole` in account `<lab-account>`
+  (`awlz-lab`) before each plan and apply.
+- Revalidated the organization trail, GuardDuty, local build, tests, linters,
+  Terraform validators, and infrastructure scanners.
+- Applied only the reviewed saved dry-run plan. The first attempt exposed an
+  AWS provider conflict between customer-managed KMS and the explicit
+  SQS-managed-encryption flag.
+- Removed the conflicting SQS flag while retaining
+  `kms_master_key_id = var.kms_key_arn`.
+- Added `tests/test_infra_invariants.py` to require customer-managed KMS and
+  reject an active SQS-managed-encryption flag in the detection module.
+- Generated and fully reviewed a recovery saved plan for the remaining
+  resources, then applied only that saved plan.
+- Inspected Terraform state, Lambda functions, EventBridge targets, running
+  processes, and the live Lambda service quota after the apply stopped.
+- Re-ran the complete local gate set after the fix:
+  `build`, `ruff`, formatting, strict `mypy`, `pytest`, detection coverage,
+  `shellcheck -x -S warning`, Terraform formatting/init/validation, `tflint`,
+  Trivy, and Checkov.
 
 ## Observed
 
-- Working tree was clean on `main` at re-entry.
-- Only the `mgmt` IAM Identity Center profile is configured locally.
-- AwLZ documents `OrganizationAccountAccessRole` as the management-to-member
-  assume-role path.
-- The live organization trail is logging and had delivered within 24 hours.
-- The live GuardDuty detector in `awlz-lab` is enabled.
-- `build/lambda/` contains `remediations/` and `notifier/`; it contains no
-  `__pycache__`, Markdown, or `policy.json`.
-- All local gates passed; `pytest` reported 170 passing tests.
-- The plan is 43 additions, zero changes, zero destroys. It has three
-  independent roles, three rules and targets, three functions, nine alarms,
-  one KMS key, one empty Secrets Manager secret, and audit-table deletion
-  protection. `dry_run` is `true`, `PAC_DRY_RUN` is wired to that guarded
-  variable, and no `secret_string` or secret version appears.
-- Detection-specific IAM now contains only handler calls:
-  - `iam-key-leak`: four allowed actions and 15 explicit denies
-  - `s3-public`: six allowed actions and 12 explicit denies
-  - `sg-open`: three allowed actions and eight explicit denies
-- Runtime IAM remains restricted to the function's own log group, audit table,
-  webhook-secret ARN, stack KMS key, and detection DLQ. There are no managed
-  policy attachments.
-- All tagged resources remain pinned to `Env = "lab"`.
-- The old saved plan was replaced, not applied. The authoritative EventBridge
-  pattern checks have not run.
+- The SQS correction is legitimate: AWS provider `6.57.1` rejects configuring
+  `kms_master_key_id` together with `sqs_managed_sse_enabled`, even when the
+  latter is `false`. Removing the redundant flag preserves the PAC CMK and
+  does not weaken encryption.
+- All local gates pass. `pytest` reports `171 passed`; Trivy reports zero
+  HIGH/CRITICAL findings; Checkov reports `76 passed`, `0 failed`, `6 skipped`.
+- The second apply stopped with
+  `InvalidParameterValueException: Specified ReservedConcurrentExecutions for
+  function decreases account's UnreservedConcurrentExecution below its
+  minimum value of [10]`.
+- Live quota `L-B99A9384` in `sa-east-1` is `10`, adjustable and regional.
+- The three Lambda functions exist in Terraform state, but no EventBridge rule
+  has a target. No apply, AWS CLI operation, Stratus process, or detonation is
+  active.
+- `reserved_concurrency = 5` is unchanged. Reducing or removing it would weaken
+  ADR-008.
+- The ignored `infra/tfplan` is stale after the partial apply and is not an
+  authorized recovery artifact.
+
+## Cleanup
+
+- No attack resources were created.
+- No EventBridge targets are active.
+- Stratus was not installed at this checkpoint, so its independent status
+  verification remains pending.
 
 ## TODO
 
-1. Obtain explicit operator confirmation before applying the reviewed saved
-   plan.
-2. After apply, run AWS's authoritative evaluator for one positive and one
-   near-miss event per pattern, capture raw evidence, update the handoff and
-   threat model, commit, and push.
+1. Commit and push the validated SQS provider fix and regression test.
+2. Request Lambda quota `L-B99A9384 = 25` only in `awlz-lab`,
+   `sa-east-1`, and record the request ID and state.
+3. Install Stratus from an official verified artifact and prove
+   `stratus status` is clean without detonating a scenario.
+4. Reconcile the partial Terraform state. If the quota is approved, generate
+   and fully review a new saved plan from current state; do not reuse the stale
+   plan or accept destroys, account changes, weaker concurrency, or unexpected
+   targets.

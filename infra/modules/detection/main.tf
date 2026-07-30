@@ -154,7 +154,8 @@ resource "aws_sqs_queue" "dead_letter" {
   kms_master_key_id                 = var.kms_key_arn
   kms_data_key_reuse_period_seconds = 300
   message_retention_seconds         = 1209600 # 14 days, the maximum
-  sqs_managed_sse_enabled           = false
+  # TODO: If this moves to SQS-managed encryption, remove kms_master_key_id
+  # before setting sqs_managed_sse_enabled; the provider rejects both together.
 }
 
 data "aws_iam_policy_document" "dead_letter" {
