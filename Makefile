@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PY := python3
 TF := terraform -chdir=infra
 
-.PHONY: help install build test lint fmt coverage validate deploy plan destroy attack timing evidence clean
+.PHONY: help install build test patterns lint fmt coverage validate deploy plan destroy attack timing evidence clean
 
 help: ## show targets
 	@grep -hE '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | column -t -s $$'\t'
@@ -15,6 +15,9 @@ build: ## stage the Lambda deployment package into build/lambda
 
 test: ## unit tests — fixtures + moto, no AWS account needed
 	pytest tests/ -v
+
+patterns: ## B2 gate — replay every fixture through EventBridge itself; needs credentials, not a deployed stack
+	./scripts/verify-patterns.sh
 
 lint: ## ruff + mypy + terraform static analysis
 	ruff check .

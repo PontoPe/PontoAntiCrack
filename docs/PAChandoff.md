@@ -132,6 +132,12 @@ Each would break an entire detection, and each is answered by a single
 **This is step 3 of the apply order and it is not optional.** A `false` there
 means the detection is dead regardless of how many unit tests pass.
 
+`make patterns` runs all three patterns against all fifteen fixtures and fails
+on the first disagreement with the service. It needs credentials and nothing
+else — no Lambda, rule or completed apply — so it does not have to wait behind
+the Lambda concurrency quota that currently blocks the wiring. Run it first.
+`./scripts/verify-patterns.sh --list` resolves the fixtures without calling AWS.
+
 ---
 
 ## 4. Do this next, in this order
@@ -144,7 +150,7 @@ verification detail for each step.
 | 0 | [AwLZ](../../AwLZ) applied through `modules/logging`; org trail delivering, GuardDuty on in the lab account | It isn't — this repo consumes that trail |
 | 1 | `make build` | `build/lambda/` is missing `remediations/` or `notifier/` |
 | 2 | `cp infra/example.tfvars infra/terraform.tfvars`, set `account_id` + `environment = "lab"`, **leave `dry_run = true`**, then `terraform plan` | The plan shows fewer than 3 IAM roles, or `PAC_DRY_RUN` is not `"true"`, or a `secret_string` appears on the secret |
-| 3 | `terraform apply`, then immediately `aws events test-event-pattern` for all three patterns | **Any pattern returns `false`** |
+| 3 | `make patterns` — all three patterns against all fifteen fixtures. Runnable before the apply completes | **Any positive fixture returns `false`, or any `benign-*` returns `true`** |
 | 4 | `aws secretsmanager put-secret-value` for the webhook | `terraform show \| grep hooks.slack` returns anything |
 | 5 | Trigger one benign event; confirm invocation, Slack alert, `DRY_RUN` audit item with a full snapshot, **and that the resource is unchanged** | The resource changed. Dry-run means dry-run |
 | 6 | Capture the real events, replace all 15 fixtures, flip the provenance markers, `make test` | — |
