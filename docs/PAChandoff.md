@@ -62,6 +62,11 @@ shellcheck -S warning           clean
 Reproduce all of it with `make lint && make test && make coverage && make validate`
 from Git Bash or WSL. The Makefile assumes a POSIX shell.
 
+Dependency note, 2026-07-30: a clean `terraform init` found that locked AWS provider
+`6.57.0` had disappeared from the official registry. `terraform init -upgrade` selected
+the signed replacement `6.57.1`; the regenerated lock file and `terraform validate` are
+green. The `~> 6.0` constraint did not change.
+
 ### Commits in this body of work
 
 ```
@@ -217,7 +222,7 @@ outcome.
 4. [mitre-attack.md](mitre-attack.md) — coverage *and* the deliberate gaps.
 5. `remediations/<pkg>/README.md` — per-detection decision, remediation,
    rollback, and known gaps.
-6. [../CLAUDE.md](../CLAUDE.md) — conventions and the decisions not to
+6. [../AGENTS.md](../AGENTS.md) — conventions and the decisions not to
    relitigate.
 
 ---
