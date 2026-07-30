@@ -65,11 +65,14 @@ for pattern in detections/*/pattern.json; do
 
     # `_pac_fixture` is this repo's provenance marker, not part of the event.
     # It is stripped so the service sees exactly what CloudTrail would deliver.
-    jq -c 'del(._pac_fixture)' "${fixture}" >"${work}/event.json"
-
+    #
+    # Both documents are passed inline rather than as `file://`. The AWS CLI
+    # resolves paramfile paths itself, and a Windows build of the CLI cannot
+    # open the `/c/...` paths a POSIX shell hands it — the call then fails as a
+    # parameter error, which reads nothing like the environment problem it is.
     actual="$(aws events test-event-pattern \
-      --event-pattern "file://${root}/${pattern}" \
-      --event "file://${work}/event.json" \
+      --event-pattern "$(jq -c . "${pattern}")" \
+      --event "$(jq -c 'del(._pac_fixture)' "${fixture}")" \
       --query Result --output text)"
     actual="$(printf '%s' "${actual}" | tr -d '\r' | tr '[:upper:]' '[:lower:]')"
 
