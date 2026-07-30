@@ -204,3 +204,39 @@ def test_json_wrapped_secret_is_unwrapped(aws: AwsClients, audit_table: Any) -> 
     )
 
     assert notifier._resolve_webhook() == WEBHOOK
+
+
+def test_unreadable_secret_does_not_fail_a_completed_remediation(
+    aws: AwsClients, audit_table: Any
+) -> None:
+    """The remediation has already happened by the time the alert is built.
+
+    Raising here would fail an invocation that succeeded, and EventBridge would
+    retry it — running the remediation a second time because a chat message
+    could not be delivered."""
+    notifier = SlackNotifier(
+        secret_arn="arn:aws:secretsmanager:sa-east-1:111111111111:secret:pac/absent-AbCdEf",
+        aws=aws,
+        table=audit_table,
+        environment="lab",
+        dedup_window_seconds=900,
+    )
+
+    assert notifier._resolve_webhook() is None
+    notifier._post({"text": "anything"})
+
+
+def test_non_https_webhook_is_refused_without_raising(aws: AwsClients, audit_table: Any) -> None:
+    """A placeholder secret is undeliverable, not a reason to crash. The URL is
+    still never fetched over a non-https scheme."""
+    secret = aws.secretsmanager.create_secret(Name="pac/slack-webhook", SecretString="REPLACE_ME")
+    notifier = SlackNotifier(
+        secret_arn=secret["ARN"],
+        aws=aws,
+        table=audit_table,
+        environment="lab",
+        dedup_window_seconds=900,
+    )
+
+    assert notifier._resolve_webhook() is None
+    notifier._post({"text": "anything"})

@@ -74,17 +74,32 @@ class SlackNotifier:
         self._post(payload)
         return True
 
-    def _resolve_webhook(self) -> str:
+    def _resolve_webhook(self) -> str | None:
+        """Return the webhook, or None if it cannot be read or is unusable.
+
+        A secret with no version, an unparseable value or a non-https URL is as
+        undeliverable as a network failure, and the reasoning below applies to
+        all of them equally: the remediation has already happened by the time
+        this runs. Raising here would fail an invocation that succeeded, and on
+        an EventBridge retry it would run the remediation a second time.
+        """
         if self._webhook is None:
-            response = self._aws.secretsmanager.get_secret_value(SecretId=self._secret_arn)
-            raw = response.get("SecretString", "")
-            self._webhook = _extract_webhook(raw)
+            try:
+                response = self._aws.secretsmanager.get_secret_value(SecretId=self._secret_arn)
+                candidate = _extract_webhook(response.get("SecretString", ""))
+            except Exception as exc:  # noqa: BLE001 - any read failure is undeliverable
+                log.error("slack webhook could not be read: %s", type(exc).__name__)
+                return None
+            if not candidate.startswith("https://"):
+                log.error("slack webhook is not an https URL; alert not delivered")
+                return None
+            self._webhook = candidate
         return self._webhook
 
     def _post(self, payload: dict[str, Any]) -> None:
         webhook = self._resolve_webhook()
-        if not webhook.startswith("https://"):
-            raise ValueError("Slack webhook must be an https URL")
+        if webhook is None:
+            return
 
         request = urllib.request.Request(  # noqa: S310 - scheme asserted https above
             webhook,
