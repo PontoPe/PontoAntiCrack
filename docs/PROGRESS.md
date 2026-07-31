@@ -4,30 +4,26 @@ Updated: 2026-07-30, after B1 completion and notifier remediation
 
 ## Current step
 
-**B1, B2 and B3 are done. B4 is unblocked and is the next step.**
+**B1 through B7 are done. B8 — publication — is the only step left.**
 
-- `make patterns`: fifteen fixtures, zero disagreements with EventBridge. Run
-  first against the documentation-derived fixtures, then again against the
-  captured ones. `docs/evidence/pattern-gate.md`.
-- Fourteen fixtures are recorded events captured in `awlz-lab`; every resource
-  used was created and deleted in the same run. The highest-risk assumption
-  held: CloudTrail emits `DeleteBucketPublicAccessBlock`, not
-  `DeletePublicAccessBlock`. `docs/evidence/fixture-capture.md`.
-- The root-credential fixture stays documentation-derived and
-  `detections/iam-key-leak/metadata.yaml` still says
-  `fixture_verified_against_live_event: false`.
-- 172 tests pass. Five of them changed because real events disagreed with
-  hand-written ones; none of the disagreements was a pattern defect.
-- Lambda quota `L-B99A9384` in `sa-east-1` is applied at `1000`. The reviewed
-  recovery apply completed with `reserved_concurrency = 5` unchanged, completing
-  B1 and allowing the EventBridge targets to be wired.
-- No technique has been detonated yet. B4 remains a dry-run detonation and
-  evidence gate, not an infrastructure blocker.
-- The Slack webhook secret exists without a usable value. This no longer fails an
-  invocation after a completed remediation: commit `d1c4ab0` logs an unreadable
-  or non-HTTPS webhook and skips delivery, matching the established network-failure
-  behavior. A Slack alert is therefore not expected until an operator supplies a
-  valid webhook.
+- Quota `L-B99A9384` was requested at 1000, the lowest value Service Quotas
+  accepts, and the applied value reached 1000. The deferred wiring then applied
+  cleanly: 12 creates, 3 updates, no drift.
+- `make patterns`: 17 fixtures, zero disagreements with EventBridge.
+- Fifteen of seventeen fixtures are recorded events.
+- `sg-open` was detonated four times with Stratus Red Team v2.34.1. Live
+  remediation took **5.97 s** from the attacker's API call; the dry run before
+  it changed nothing; the circuit breaker held after five actions and left four
+  ports open with four `BLOCKED` records.
+- Two defects were found by detonating that every green gate had missed: the
+  loop guard read the caller-chosen session name, and the pattern knew only one
+  of the two CloudTrail encodings of `AuthorizeSecurityGroupIngress`. Both
+  fixed, both written up.
+- The lab is clean: no technique `WARM` or `DETONATED`, no instances, no
+  buckets, all three dead-letter queues empty.
+- History was scrubbed of the lab account ID and force-pushed before
+  publication; the only secret-shaped strings in the history are AWS
+  documentation examples and placeholder webhooks.
 
 ## Commands attempted
 

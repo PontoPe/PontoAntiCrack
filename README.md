@@ -78,7 +78,25 @@ root credential finding is escalated and never acted on. The pipeline invariants
 hold: the snapshot survives a failed remediation, dry-run changes nothing, the
 circuit breaker stops a storm, an alert never carries credential material.
 
+![Detection and remediation, replayed from the recorded lab run](docs/img/demo.gif)
+
 **Proven since 2026-07-30:**
+
+- **The technique was detonated and the remediation ran.** Stratus Red Team
+  opened SSH to the internet in the lab account; the rule was revoked **5.97
+  seconds** after the attacker's API call, and the group's port 443 rule was
+  left alone. `docs/evidence/time-to-remediate.md`.
+- **Dry run means dry run.** The same technique in `dry_run = true` produced the
+  same plan and the same snapshot and changed nothing — the port was still open
+  afterwards.
+- **The circuit breaker holds.** Seven world-open ports in eighty seconds: five
+  actions, then four `BLOCKED` records and four ports deliberately left open.
+- **Detonating found two defects that every green gate had missed**, both
+  written up in `docs/evidence/detonation-sg-open.md`: a loop guard that read
+  the caller-chosen session name, so any attacker passing
+  `--role-session-name pac-…` was skipped; and a pattern that knew only one of
+  the two CloudTrail encodings of `AuthorizeSecurityGroupIngress`, so an
+  attacker using the legacy parameter form was invisible.
 
 - **EventBridge itself agrees with every pattern on every fixture.** `make
   patterns` replays all fifteen through `aws events test-event-pattern`;
