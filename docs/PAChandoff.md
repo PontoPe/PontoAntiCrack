@@ -18,22 +18,24 @@ The thing that makes this worth showing to anyone is not that the detections
 exist. It is that they have tests, and that they will have been proven by
 detonating the real technique.
 
-**Current state: applied to AWS in part, patterns confirmed by the service,
-fixtures captured from real events, nothing detonated.**
+**Current state: deployed, detonated, measured, and public.**
 
-- The three Lambdas exist in `awlz-lab` with `dry_run = true`. They are **not
-  wired to EventBridge**: the account's regional Lambda concurrency quota is 10,
-  and three functions reserving 5 each plus the 10 unreserved executions AWS
-  enforces needs 25. A request for 1000 — the lowest value Service Quotas
-  accepts — is open as a support case.
-- `make patterns` replays all fifteen fixtures through
-  `aws events test-event-pattern`: fifteen agreements, zero disagreements. That
-  closes ADR-010's limitation.
-- Fourteen of fifteen fixtures are now recorded events captured in the lab. The
-  root-credential one stays documentation-derived, because GuardDuty sample
-  findings always carry a placeholder principal.
-- No technique has been detonated and no remediation has touched a real
-  resource, because that needs the wiring the quota blocks.
+- The three Lambdas are deployed in `awlz-lab` and wired to EventBridge. The
+  concurrency quota that blocked the wiring was raised to 1000, the lowest value
+  Service Quotas accepts.
+- `make patterns` replays all seventeen fixtures through
+  `aws events test-event-pattern`: seventeen agreements, zero disagreements.
+- Fifteen of seventeen fixtures are recorded events captured in the lab.
+- `sg-open` was detonated with Stratus Red Team v2.34.1. Live remediation
+  revoked the world-open SSH rule **5.97 s** after the attacker's API call and
+  left the group's port 443 rule alone. The dry run before it changed nothing.
+  The circuit breaker was tripped on purpose and held.
+- Detonating found two defects that every green gate had missed: a loop guard
+  reading the caller-chosen session name, and a pattern that knew only one of
+  the two CloudTrail encodings of `AuthorizeSecurityGroupIngress`.
+- The repository is public. History was scrubbed of the lab account ID first.
+- `s3-public` and `iam-key-leak` have not been detonated, so their remediation
+  latency is unmeasured.
 
 Nothing about that is hidden — it is marked in the fixtures, in the detection
 metadata, in the README, in the threat model, and enforced by a test that fails
@@ -47,18 +49,18 @@ if the markers stop being accurate.
 |---|---|---|
 | Detections | 3 | `s3-public`, `iam-key-leak`, `sg-open` |
 | Terraform files | 14 | Root stack + one reusable `detection` module |
-| Event fixtures | 15 | **14 captured from real events; 1 documentation-derived** |
-| Tests | 172 | All passing |
+| Event fixtures | 17 | **15 captured from real events; 2 documentation-derived** |
+| Tests | 185 | All passing |
 | ADRs | 15 | `docs/architecture.md` |
-| Detonations run | 0 | blocked on the Lambda concurrency quota |
-| Evidence artefacts | 2 | `pattern-gate.md`, `fixture-capture.md` |
+| Detonations run | 4 | one technique: dry run, live, and a breaker run |
+| Evidence artefacts | 4 | pattern gate, fixture capture, detonation, time-to-remediate |
 
 ### Verification, as of `c101ce8`
 
 Run on Windows 11 / PowerShell 7 with the toolchain in §7:
 
 ```
-pytest                          172 passed
+pytest                          185 passed
 ruff check                      All checks passed!
 ruff format --check             54 files already formatted
 mypy --strict                   Success: no issues found in 22 source files
@@ -69,7 +71,7 @@ trivy config infra              0 misconfigurations, 0 suppressions
 checkov -d infra                76 passed, 0 failed, 6 skipped
 check-detection-coverage.sh     all detections complete
 shellcheck -S warning           clean
-make patterns                   15 fixtures, 0 disagreements with the service
+make patterns                   17 fixtures, 0 disagreements with the service
 ```
 
 Reproduce all of it with `make lint && make test && make coverage && make validate`
@@ -100,7 +102,7 @@ d794d14 feat(notifier): add Slack alerting with context, dedup, and redaction
 This distinction is the whole point of the repository, so it gets stated
 plainly rather than implied.
 
-### Proven by the 172 tests
+### Proven by the 185 tests
 
 - Each pattern matches the events its author intended.
 - Each pattern **rejects** the plausible-but-benign near-miss: a read-only
