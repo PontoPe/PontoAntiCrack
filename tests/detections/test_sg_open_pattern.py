@@ -15,10 +15,40 @@ PATTERN = load_pattern("sg-open")
     [
         "authorize-ingress-ssh-world",
         "authorize-ingress-rdp-world-ipv6",
+        "authorize-ingress-ssh-world-legacy-params",
     ],
 )
 def test_pattern_matches_world_open_ingress(fixture: str) -> None:
     assert matches(PATTERN, load_event("cloudtrail", "sg-open", fixture))
+
+
+def test_pattern_matches_the_legacy_parameter_encoding() -> None:
+    """AuthorizeSecurityGroupIngress has two CloudTrail encodings for the same
+    call, and the pattern originally knew one of them.
+
+    The AWS CLI sends `IpPermissions` and CloudTrail records the nested
+    `ipPermissions.items[].ipRanges.items[].cidrIp`. A caller using the legacy
+    top-level parameters — which is what the SDK path Stratus Red Team uses
+    does — produces an empty `ipPermissions` and `ipProtocol`/`fromPort`/
+    `toPort`/`cidrIp` directly on `requestParameters`.
+
+    This was found by detonating the technique: port 22 was opened to the
+    internet and the rule did not match, while the Terraform warm-up's own
+    443 rule did. Every unit test passed throughout, because every fixture had
+    been produced by the CLI."""
+    event = load_event("cloudtrail", "sg-open", "authorize-ingress-ssh-world-legacy-params")
+    params = event["detail"]["requestParameters"]
+
+    assert params["ipPermissions"] == {}, "fixture is not the legacy encoding"
+    assert params["cidrIp"] == "0.0.0.0/0"
+    assert matches(PATTERN, event)
+
+
+def test_pattern_ignores_internal_cidr_in_the_legacy_encoding() -> None:
+    event = load_event(
+        "cloudtrail", "sg-open", "benign-authorize-ingress-legacy-params-internal-cidr"
+    )
+    assert not matches(PATTERN, event)
 
 
 def test_pattern_ignores_internal_cidr() -> None:

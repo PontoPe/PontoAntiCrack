@@ -19,7 +19,7 @@ defaults:
 
 scenarios:
   - detection: s3-public
-    ttp: aws.exfiltration.s3-backdoor
+    ttp: aws.exfiltration.s3-backdoor-bucket-policy
     technique: T1530
     description: >-
       Stratus creates a bucket and attaches a policy granting read to an
@@ -72,7 +72,7 @@ scenarios:
     guardduty_lead_time_minutes: 15
 
   - detection: sg-open
-    ttp: aws.defense-evasion.security-group-open-port-22-ingress
+    ttp: aws.exfiltration.ec2-security-group-open-port-22-ingress
     technique: T1190
     description: >-
       Stratus opens port 22 to 0.0.0.0/0 on a security group. The cleanest

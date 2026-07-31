@@ -18,7 +18,7 @@ usage() {
   cat >&2 <<'EOF'
 usage: assert.sh <ttp> [resource-id]
 
-  ttp          Stratus Red Team technique ID, e.g. aws.defense-evasion.security-group-open-port-22-ingress
+  ttp          Stratus Red Team technique ID, e.g. aws.exfiltration.ec2-security-group-open-port-22-ingress
   resource-id  Resource to assert on. Discovered from the audit table if omitted.
 
 required environment:
@@ -59,7 +59,7 @@ fi
 # --- what are we asserting --------------------------------------------------
 
 case "${ttp}" in
-  aws.exfiltration.s3-backdoor)
+  aws.exfiltration.s3-backdoor-bucket-policy)
     detection="s3-public"
     expected_status="APPLIED"
     ;;
@@ -68,7 +68,7 @@ case "${ttp}" in
     # Temporary credentials cannot be deactivated; the handler escalates.
     expected_status="ESCALATED"
     ;;
-  aws.defense-evasion.security-group-open-port-22-ingress)
+  aws.exfiltration.ec2-security-group-open-port-22-ingress)
     detection="sg-open"
     expected_status="APPLIED"
     ;;

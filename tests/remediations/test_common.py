@@ -10,6 +10,7 @@ from remediations.common import redact
 from remediations.common.circuit_breaker import CircuitBreaker
 from remediations.common.config import Config, ConfigError
 from remediations.common.events import UnsupportedEventError, as_items, parse
+from remediations.common.models import Principal
 from tests.conftest import load_event
 
 BASE_ENV = {"PAC_DETECTION_ID": "s3-public", "PAC_TABLE_NAME": "pac-audit"}
@@ -149,3 +150,31 @@ def test_breakers_are_independent_per_detection(aws: Any, audit_table: Any) -> N
     noisy.check_and_increment(at=1_000)
     assert noisy.check_and_increment(at=1_000).open
     assert not quiet.check_and_increment(at=1_000).open
+
+
+def test_session_name_cannot_impersonate_this_systems_automation() -> None:
+    """Found by detonating a real technique: Stratus ran under a session called
+    `pac-terraform` and the detection skipped its own attack.
+
+    The session name is chosen by the caller on every AssumeRole, so a guard
+    that reads it is a detection bypass the attacker selects."""
+    attacker = Principal(
+        arn="arn:aws:sts::111111111111:assumed-role/OrganizationAccountAccessRole/pac-terraform",
+        type="AssumedRole",
+        name="OrganizationAccountAccessRole",
+        account_id="111111111111",
+    )
+
+    assert attacker.role_name == "OrganizationAccountAccessRole"
+    assert not attacker.is_pac_automation()
+
+
+def test_the_real_remediation_role_is_still_recognised() -> None:
+    ours = Principal(
+        arn="arn:aws:sts::111111111111:assumed-role/pac-sg-open-remediation/pac-sg-open",
+        type="AssumedRole",
+        name="pac-sg-open-remediation",
+        account_id="111111111111",
+    )
+
+    assert ours.is_pac_automation()

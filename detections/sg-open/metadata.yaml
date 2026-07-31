@@ -31,4 +31,4 @@ known_gaps:
     A rule opened via a prefix list that itself contains 0.0.0.0/0 is not
     matched.
 fixture_status: derived-from-documentation
-fixture_verified_against_live_event: true
+fixture_verified_against_live_event: false

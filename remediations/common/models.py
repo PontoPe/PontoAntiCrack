@@ -44,14 +44,37 @@ class Principal:
     def is_root(self) -> bool:
         return self.type == "Root" or self.arn.endswith(":root")
 
+    @property
+    def role_name(self) -> str:
+        """The role an assumed-role principal holds, without the session name.
+
+        ``arn:aws:sts::<account>:assumed-role/<role>/<session>`` — only the
+        middle segment is controlled by whoever created the role. The session
+        name is chosen freely by the caller on every ``AssumeRole``, so nothing
+        security-relevant may be decided from it.
+        """
+        marker = ":assumed-role/"
+        if marker not in self.arn:
+            return self.name
+        return self.arn.split(marker, 1)[1].split("/", 1)[0]
+
     def is_pac_automation(self, prefix: str = "pac-") -> bool:
         """True when the caller is this system's own remediation role.
 
         Without this check a remediation that calls ``PutBucketAcl`` re-triggers
         its own detection, which is a self-sustaining invocation loop with a
         bill attached.
+
+        The comparison is against the **role name only**. An earlier version
+        tested ``prefix in self.arn``, and the session name is part of that ARN
+        — so any attacker who passed ``--role-session-name pac-anything`` was
+        classified as this system's own automation and skipped without
+        remediation. That was found by detonating a real technique: Stratus ran
+        under a session called ``pac-terraform`` and the detection dropped its
+        own attack. A detection bypass that the attacker selects is worse than
+        no loop guard at all.
         """
-        return prefix in self.arn or self.name.startswith(prefix)
+        return self.role_name.startswith(prefix)
 
 
 @dataclass(frozen=True, slots=True)

@@ -34,8 +34,8 @@ if [ "${current_account}" != "${STRATUS_LAB_ACCOUNT_ID}" ]; then
 fi
 
 scenarios=(
-  "sg-open:aws.defense-evasion.security-group-open-port-22-ingress"
-  "s3-public:aws.exfiltration.s3-backdoor"
+  "sg-open:aws.exfiltration.ec2-security-group-open-port-22-ingress"
+  "s3-public:aws.exfiltration.s3-backdoor-bucket-policy"
   "iam-key-leak:aws.credential-access.ec2-steal-instance-credentials"
 )
 

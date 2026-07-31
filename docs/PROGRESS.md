@@ -1,10 +1,10 @@
 # PAC live validation progress
 
-Updated: 2026-07-30
+Updated: 2026-07-30, after B1 completion and notifier remediation
 
 ## Current step
 
-**B2 and B3 are done. B4 onward waits on the Lambda concurrency quota.**
+**B1, B2 and B3 are done. B4 is unblocked and is the next step.**
 
 - `make patterns`: fifteen fixtures, zero disagreements with EventBridge. Run
   first against the documentation-derived fixtures, then again against the
@@ -18,9 +18,16 @@ Updated: 2026-07-30
   `fixture_verified_against_live_event: false`.
 - 172 tests pass. Five of them changed because real events disagreed with
   hand-written ones; none of the disagreements was a pattern defect.
-- Quota request `L-B99A9384` → 1000 in `sa-east-1` is `CASE_OPENED`; applied
-  value is still 10. Until it lands, no EventBridge target can be created, so
-  nothing can be detonated.
+- Lambda quota `L-B99A9384` in `sa-east-1` is applied at `1000`. The reviewed
+  recovery apply completed with `reserved_concurrency = 5` unchanged, completing
+  B1 and allowing the EventBridge targets to be wired.
+- No technique has been detonated yet. B4 remains a dry-run detonation and
+  evidence gate, not an infrastructure blocker.
+- The Slack webhook secret exists without a usable value. This no longer fails an
+  invocation after a completed remediation: commit `d1c4ab0` logs an unreadable
+  or non-HTTPS webhook and skips delivery, matching the established network-failure
+  behavior. A Slack alert is therefore not expected until an operator supplies a
+  valid webhook.
 
 ## Commands attempted
 
@@ -62,6 +69,12 @@ Updated: 2026-07-30
 - Removed the three Terraform `tainted` markers only after that comparison.
   This changed state metadata, not AWS resources, and prevents an unsafe
   replacement in the next plan.
+- After the quota was applied at `1000`, completed the reviewed recovery apply.
+  B1 is complete; the prior quota failure and partial state below are retained as
+  history, not current state.
+- Before any detonation, tested the notifier path with the absent Slack webhook
+  value found in the lab. Fixed the post-remediation failure mode in `d1c4ab0`
+  and added coverage for unreadable and non-HTTPS secret values.
 
 ## Observed
 
@@ -71,12 +84,12 @@ Updated: 2026-07-30
   does not weaken encryption.
 - All local gates pass. `pytest` reports `171 passed`; Trivy reports zero
   HIGH/CRITICAL findings; Checkov reports `76 passed`, `0 failed`, `6 skipped`.
-- The second apply stopped with
+- Before the quota increase, the second apply stopped with
   `InvalidParameterValueException: Specified ReservedConcurrentExecutions for
   function decreases account's UnreservedConcurrentExecution below its
   minimum value of [10]`.
-- Live quota `L-B99A9384` in `sa-east-1` is `10`, adjustable and regional.
-- The Service Quotas API rejected `25` before creating a request:
+- Before the quota increase, live quota `L-B99A9384` in `sa-east-1` was `10`.
+  The Service Quotas API rejected `25` before creating a request:
   `You must provide a quota value greater than the default quota value of
   1000.0`. The official console independently showed applied value `10`,
   default value `1000`, and enforced a minimum request value of `1000`.
@@ -88,12 +101,10 @@ Updated: 2026-07-30
   `ca73bb639216a21907b28d5791940c1cbce9f75dfa8913956c96a41112fa43ad`.
   Official checksum-file SHA-256:
   `ca174b514258dc5cc25f2d9fabc37c182040d2aafe47650cc231e8475ff55b75`.
-- The three Lambda functions exist in Terraform state, but no EventBridge rule
-  has a target. No apply, AWS CLI operation, Stratus process, or detonation is
-  active.
-- Terraform now tracks `31` managed resources: the three Lambdas are
-  `Active/Successful`; three dead-letter alarms exist; the six other alarms,
-  three Lambda permissions, and three EventBridge targets do not exist yet.
+- The quota is now `1000` and B1's recovery apply completed. The previous
+  no-target/31-resource description is superseded; verify the post-apply state
+  immediately before B4 rather than relying on the partial-apply inventory.
+- No Stratus process or detonation is active.
 - Terraform state contains zero tainted instances after reconciliation.
 - `reserved_concurrency = 5` is unchanged. Reducing or removing it would weaken
   ADR-008.
@@ -119,13 +130,11 @@ commit `e796ecf`.
 
 ## TODO
 
-1. Run `make patterns` first. It needs only an AWS session and settles ADR-010's
-   documented limitation. A `false` on a positive fixture, or a `true` on a
-   `benign-*` one, kills that detection regardless of the 171 unit tests.
-2. Obtain an AWS-supported path that accepts the exact applied-quota increase
-   from `10` to `25`; the Service Quotas API and console currently reject it
-   against the formal default of `1000`.
-3. After `L-B99A9384` is actually at least `25`, reconfirm the caller and
-   generate a new saved plan from the reconciled state.
-4. Fully review that new plan. Do not reuse the stale plan or accept destroys,
-   account changes, weaker concurrency, or unexpected targets.
+1. Before B4, reconfirm the lab caller, the completed Terraform state and that
+   `PAC_DRY_RUN=true`; do not weaken `reserved_concurrency = 5`.
+2. Detonate the approved Stratus technique in dry-run mode and assert the audit
+   snapshot, Lambda invocation and unchanged resource. An absent Slack webhook
+   must be recorded as an undelivered alert, not treated as a failed remediation.
+3. Complete B5 and B6 only after B4: live lab remediation and timing, then a
+   deliberate circuit-breaker trip.
+4. Capture evidence and demo, then complete publication (B7–B8).

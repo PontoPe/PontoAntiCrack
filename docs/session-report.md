@@ -283,7 +283,7 @@ access to production.
 
 ```bash
 export STRATUS_LAB_ACCOUNT_ID=<lab-account>
-make attack TTP=aws.defense-evasion.security-group-open-port-22-ingress
+make attack TTP=aws.exfiltration.ec2-security-group-open-port-22-ingress
 ```
 
 `assert.sh` will report a `DRY_RUN` record where it expects `APPLIED` and fail.

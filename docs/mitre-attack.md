@@ -27,9 +27,9 @@ is a decision that gets made in front of the keyboard.
 
 | Detection | Tool | Scenario |
 |---|---|---|
-| `s3-public` | Stratus Red Team | `aws.exfiltration.s3-backdoor` |
+| `s3-public` | Stratus Red Team | `aws.exfiltration.s3-backdoor-bucket-policy` |
 | `iam-key-leak` | Stratus Red Team | `aws.credential-access.ec2-steal-instance-credentials` |
-| `sg-open` | Stratus Red Team | `aws.defense-evasion.security-group-open-port-22-ingress` |
+| `sg-open` | Stratus Red Team | `aws.exfiltration.ec2-security-group-open-port-22-ingress` |
 
 See [`attack-sim/README.md`](../attack-sim/README.md).
 

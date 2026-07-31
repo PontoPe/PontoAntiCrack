@@ -34,7 +34,7 @@ export AWS_PROFILE=lab
 export STRATUS_LAB_ACCOUNT_ID=<the lab account id>
 
 stratus list
-make attack TTP=aws.defense-evasion.security-group-open-port-22-ingress
+make attack TTP=aws.exfiltration.ec2-security-group-open-port-22-ingress
 ```
 
 `make attack` detonates, asserts, and cleans up. `stratus cleanup` is not
@@ -52,7 +52,7 @@ For the full measurement pass:
 See [`scenarios.yaml`](scenarios.yaml) for the assertions. Two caveats that
 matter before the first run:
 
-**`s3-public`** — the stock `aws.exfiltration.s3-backdoor` scenario grants
+**`s3-public`** — the stock `aws.exfiltration.s3-backdoor-bucket-policy` scenario grants
 access to a *specific external account*, not to `AllUsers`. The handler treats a
 named external principal as not-public, on purpose. So this scenario may
 correctly produce no remediation, and that would be the detection working, not

@@ -1,17 +1,37 @@
 {
-  "source": ["aws.ec2"],
-  "detail-type": ["AWS API Call via CloudTrail"],
+  "source": [
+    "aws.ec2"
+  ],
+  "detail-type": [
+    "AWS API Call via CloudTrail"
+  ],
   "detail": {
-    "eventSource": ["ec2.amazonaws.com"],
-    "eventName": ["AuthorizeSecurityGroupIngress"],
-    "errorCode": [{ "exists": false }]
+    "eventSource": [
+      "ec2.amazonaws.com"
+    ],
+    "eventName": [
+      "AuthorizeSecurityGroupIngress"
+    ],
+    "errorCode": [
+      {
+        "exists": false
+      }
+    ]
   },
   "$or": [
     {
       "detail": {
         "requestParameters": {
           "ipPermissions": {
-            "items": { "ipRanges": { "items": { "cidrIp": ["0.0.0.0/0"] } } }
+            "items": {
+              "ipRanges": {
+                "items": {
+                  "cidrIp": [
+                    "0.0.0.0/0"
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -20,8 +40,34 @@
       "detail": {
         "requestParameters": {
           "ipPermissions": {
-            "items": { "ipv6Ranges": { "items": { "cidrIpv6": ["::/0"] } } }
+            "items": {
+              "ipv6Ranges": {
+                "items": {
+                  "cidrIpv6": [
+                    "::/0"
+                  ]
+                }
+              }
+            }
           }
+        }
+      }
+    },
+    {
+      "detail": {
+        "requestParameters": {
+          "cidrIp": [
+            "0.0.0.0/0"
+          ]
+        }
+      }
+    },
+    {
+      "detail": {
+        "requestParameters": {
+          "cidrIpv6": [
+            "::/0"
+          ]
         }
       }
     }
