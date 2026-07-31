@@ -24,6 +24,12 @@ Updated: 2026-07-30, after B1 completion and notifier remediation
 - History was scrubbed of the lab account ID and force-pushed before
   publication; the only secret-shaped strings in the history are AWS
   documentation examples and placeholder webhooks.
+- **The lab is left running with `dry_run = false`.** That is the state the
+  measurement was taken in and the state the evidence describes. It lives in the
+  gitignored `infra/terraform.tfvars`, so it is recorded here rather than being
+  visible in the repository. Any account other than the lab starts at
+  `dry_run = true` and stays there until a week of real traffic has been
+  reviewed — step 10 of the handoff order.
 
 ## Commands attempted
 
