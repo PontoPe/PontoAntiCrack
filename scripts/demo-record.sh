@@ -7,14 +7,20 @@ set -euo pipefail
 DEMO_SCRIPT="${DEMO_SCRIPT:?set DEMO_SCRIPT to an executable demo driver}"
 TITLE="${TITLE:-PontoAntiCrack detection and remediation}"
 OUT_DIR="${OUT_DIR:-docs/img}"
-NAME="${NAME:-demo}"
+# Namespaced on purpose. `NAME` is set by WSL to the Windows hostname, so a
+# bare ${NAME:-demo} wrote docs/img/<machine-name>.gif — a leak of the operator's
+# machine into a public repository, from a variable nobody passed.
+NAME="${PAC_DEMO_NAME:-demo}"
 COLS="${COLS:-104}"
 ROWS="${ROWS:-46}"
 FONT_FAMILY="${FONT_FAMILY:-DejaVu Sans Mono}"
 FONT_SIZE="${FONT_SIZE:-15}"
 THEME="${THEME:-asciinema}"
 SPEED="${SPEED:-0.6}"
-RENDER_IDLE_LIMIT="${RENDER_IDLE_LIMIT:-5}"
+# The driver prints in one burst, so the only idle in the cast is the shell
+# warm-up before it. At 5s that becomes a blank opening frame filling a third of
+# the GIF; pacing belongs in the render, not in padding the recording.
+RENDER_IDLE_LIMIT="${RENDER_IDLE_LIMIT:-1}"
 LAST_FRAME_DURATION="${LAST_FRAME_DURATION:-6}"
 
 # PAC-specific additions: AWS identities, Slack webhooks, Stratus account

@@ -1,0 +1,27 @@
+{
+  "schema": "pac-detonation-replay/v1",
+  "technique": "aws.exfiltration.ec2-security-group-open-port-22-ingress",
+  "tool": "Stratus Red Team v2.34.1",
+  "environment": "lab",
+  "dry_run_first": {
+    "status": "DRY_RUN",
+    "intended_action": "revoke ingress tcp/22-22 from 0.0.0.0/0 from sg-0123456789abcdef0",
+    "resource_changed": false
+  },
+  "live": {
+    "status": "APPLIED",
+    "event_time": "2026-07-31T00:07:52Z",
+    "completed_at": "2026-07-31T00:07:57.971016Z",
+    "seconds_to_remediate": 5.97,
+    "action": "revoked ingress tcp/22-22 from 0.0.0.0/0 from sg-0123456789abcdef0"
+  },
+  "scoping": {
+    "rules_before": 2,
+    "rules_revoked": 1,
+    "preserved": "tcp/443 from 0.0.0.0/0"
+  },
+  "circuit_breaker": {
+    "blocked_records": 4,
+    "max_actions_per_window": 5
+  }
+}
