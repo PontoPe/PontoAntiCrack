@@ -156,9 +156,17 @@ each catches a class the others cannot.
 | 9 | `tflint --recursive` | Dead declarations, provider-specific mistakes | ~5s |
 | 10 | `trivy config` + `checkov` | Security misconfiguration | ~30s |
 
-Then, only on a real account: `terraform plan`, and after apply,
-`aws events test-event-pattern`. Those two are not substitutes for anything
-above and nothing above is a substitute for them — see §7.
+Then, only on a real account, three more — and the order matters, because each
+one can only be reached by passing the one before it:
+
+| # | Gate | Catches | Needs |
+|---|---|---|---|
+| 11 | `terraform plan` / apply | Anything AWS rejects that `validate` cannot see | credentials |
+| 12 | `make patterns` | A pattern the service reads differently than the local evaluator does | credentials only — no deployed stack |
+| 13 | `stratus detonate` + read the audit table | A detection that does not fire on the attack it was written for | a wired stack in an isolated lab account |
+
+Gate 13 is the expensive one and it is the only one that has ever found a
+detection that was simply blind. See §5 and §7.
 
 ### On this machine
 
@@ -288,6 +296,43 @@ the handoff, not by any gate.
 still describes the code. Re-derive counts from the filesystem rather than from
 memory whenever you cite one.
 
+### Found by detonating, with every gate green
+
+Both of these survived 176 passing tests, a coverage gate, a pattern gate
+agreeing with EventBridge on every fixture, and fixtures captured from real
+CloudTrail. They are the reason gate 13 exists.
+
+**A loop guard the attacker controls.** `Principal.is_pac_automation()` tested
+`"pac-" in self.arn`. An assumed-role ARN is
+`arn:aws:sts::<account>:assumed-role/<role>/<session>`, and the session name is
+chosen by the caller on every `AssumeRole`. Stratus happened to run under
+`pac-terraform`, so the detection classified the attack as its own automation
+and recorded a confident `SKIPPED`. Anyone passing
+`--role-session-name pac-anything` was invisible. The comparison is against the
+role name now, which is fixed when the role is created.
+
+*The general shape:* a security decision made from a field the adversary can
+set. Ask of any predicate — who writes this string?
+
+**A pattern that knew one of two encodings.** `AuthorizeSecurityGroupIngress`
+is recorded two ways. The AWS CLI sends `IpPermissions` and CloudTrail nests
+`ipPermissions.items[].ipRanges.items[].cidrIp`. A caller using the legacy
+top-level parameters produces an empty `ipPermissions` with `ipProtocol`,
+`fromPort`, `toPort` and `cidrIp` directly on `requestParameters`. Every fixture
+had come from the CLI, so the pattern had only ever seen one shape. Port 22 was
+opened to the internet and the rule did not match; the only thing that matched
+was the technique's own Terraform warm-up creating a 443 rule.
+
+*The general shape:* fixtures inherit the bias of whatever produced them. Two
+tools calling the same API are two different sources of truth, and a corpus
+built from one tool is a corpus with a blind spot you cannot see from inside it.
+
+**What kept both from being worse.** The handler reads the security group back
+instead of trusting the event, so a missed encoding was a missed detection
+rather than a wrong remediation. And `dry_run = true` was the default through
+every one of these runs, so the first live remediation happened only after the
+pattern was fixed.
+
 ---
 
 ## 6. Working with the scanners
@@ -343,13 +388,18 @@ test file — a bug there would turn every detection test green for the wrong
 reason. But it proves *the pattern says what its author meant*, not *EventBridge
 agrees*. Only `aws events test-event-pattern` proves the second (ADR-010).
 
-**A fixture is a hypothesis until it is captured.** All 15 in this repository
-were written from AWS documentation. Three assumptions inside them are
-load-bearing enough that being wrong kills an entire detection — the `$or`
-placement and the `items[]` nesting in `sg-open`, and the
-`DeleteBucketPublicAccessBlock` event name in `s3-public`. Each is answered by
-one API call. They are listed in [PAChandoff.md](PAChandoff.md) §3 and are step 3 of
-the apply order.
+**A fixture is a hypothesis until it is captured.** All 15 originals were
+written from AWS documentation, and three assumptions inside them were
+load-bearing enough that being wrong killed an entire detection. Fifteen of the
+seventeen fixtures are captured events now, and the three assumptions held.
+
+**And a captured fixture is still only one shape.** This is the limit that cost
+the most to learn. `sg-open` was blind to an entire CloudTrail encoding of
+`AuthorizeSecurityGroupIngress` while every gate above was green, including the
+pattern gate, because every fixture had been produced by the AWS CLI and the CLI
+emits only one of the two encodings. A gate compares a pattern against the
+documents it is handed; it cannot tell you which documents you never thought to
+hand it. Only detonating the technique did.
 
 **`moto` is not AWS.** It is excellent for asserting that a handler calls the
 right API with the right arguments and reacts correctly to the response. It does
@@ -371,8 +421,10 @@ that destroys the artefact's whole purpose. Four rules, all of them mechanised
 where mechanisation was possible.
 
 1. **Separate "tested" from "proven".** The README detection table has two
-   columns, `Unit tests` and `Detonated`. Today they read ✅ and ❌. One is not
-   allowed to imply the other.
+   columns, `Unit tests` and `Detonated`. They were ✅ and ❌ for the whole build,
+   and the distinction turned out to be the load-bearing one: `sg-open` was
+   fully tested and completely blind at the same time. `sg-open` is detonated
+   now; `s3-public` and `iam-key-leak` are not, and their column still says so.
 
 2. **Provenance is machine-checked, not asserted.** Every fixture carries a
    `_pac_fixture` marker with its status and the command that would capture the
@@ -386,11 +438,13 @@ where mechanisation was possible.
    A comment saying "TODO: verify these fixtures" stops being true within a
    month and nobody notices. A test does not.
 
-3. **Empty is a valid state, and better than plausible.** `docs/evidence/` is
-   empty because nothing has been measured. Its README explains what will land
-   there and what produces each artefact. A table of realistic-looking latency
-   numbers would have been trivial to write and would have made every other
-   number in the repository worthless.
+3. **Empty is a valid state, and better than plausible.** `docs/evidence/` was
+   empty for the whole build because nothing had been measured, and its README
+   explained what would land there and what would produce it. A table of
+   realistic-looking latency numbers would have been trivial to write and would
+   have made every other number in the repository worthless. It now holds four
+   artefacts and exactly one latency figure — 5.97 s, one detection, one run —
+   and says that is what it is.
 
 4. **Name the gaps.** [mitre-attack.md](mitre-attack.md) has a
    *"What is deliberately not covered"* section — no T1098 detection, no

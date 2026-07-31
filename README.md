@@ -61,7 +61,7 @@ must not. `scripts/check-detection-coverage.sh` fails CI on a partial one.
 |----|---------|-------------|--------|-----------|-----------|
 | [`s3-public`](remediations/s3_public/README.md) | ACL / policy / BPA change that can expose a bucket | Enable all four Block Public Access settings; reset a public ACL. **Policy retained as evidence.** | T1530, T1562.001 | ✅ | ❌ |
 | [`iam-key-leak`](remediations/iam_key_leak/README.md) | GuardDuty finding ≥ MEDIUM on an access key | Capture `last-used`, set the key **Inactive, never deleted**. Root and temporary credentials escalate instead. | T1552.001, T1078.004 | ✅ | ❌ |
-| [`sg-open`](remediations/sg_open/README.md) | Ingress authorised from `0.0.0.0/0` or `::/0` | Revoke **only** the world-open CIDRs on entries covering a sensitive port | T1190, T1021 | ✅ | ❌ |
+| [`sg-open`](remediations/sg_open/README.md) | Ingress authorised from `0.0.0.0/0` or `::/0`, in **either** CloudTrail encoding | Revoke **only** the world-open CIDRs on entries covering a sensitive port | T1190, T1021 | ✅ | ✅ 5.97 s |
 
 Full mapping and the deliberate gaps: [docs/mitre-attack.md](docs/mitre-attack.md).
 

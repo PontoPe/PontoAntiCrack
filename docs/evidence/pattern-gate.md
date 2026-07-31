@@ -50,18 +50,23 @@ have shown up as `sg-open` matching nothing while every unit test passed.
 returned the same verdict on all fifteen documents. That is the specific risk
 the local evaluator carries, and it is measured rather than assumed.
 
-## What this does not settle
+## What this run did not settle, and what did
 
-The fixtures are still derived from documentation — each one says so in its own
-`_pac_fixture.verified_against_live_event: false`. This run proves the patterns
-agree with the service **about these documents**. It does not prove the
-documents match what CloudTrail actually emits.
+At the time of this run the fixtures were still written from documentation, so
+it proved the patterns agreed with the service **about those documents** — not
+that the documents matched what CloudTrail emits. The event-name assumption in
+particular could not be settled by a fixture that asserts the very name in
+question.
 
-That is a different question and it is what B3 answered by capturing real
-events — see `fixture-capture.md`. The gate was re-run against the captured
-fixtures and still reports fifteen agreements, which is the run that carries
-the claim. The event-name assumption in particular — that CloudTrail emits
-`DeleteBucketPublicAccessBlock` rather than the API's `DeletePublicAccessBlock`
-— cannot be settled here, because the fixture asserts the very name under
-question. Re-run this gate after the fixtures are replaced; the run that
-matters is the one against captured events.
+B3 answered that by capturing real events; see `fixture-capture.md`. The gate
+was re-run against the captured fixtures, and again after `sg-open` grew the
+legacy-encoding branch, and reports **seventeen agreements, zero
+disagreements**. That later run is the one that carries the claim.
+
+One limit survives both runs. A gate can only compare a pattern against the
+documents it is given. `sg-open` was blind to an entire CloudTrail encoding of
+`AuthorizeSecurityGroupIngress` while this gate was green, because no fixture
+carried that encoding — the AWS CLI had produced them all. Only detonating the
+technique surfaced it (`detonation-sg-open.md`). A pattern gate proves the
+pattern means what its author intended; it cannot prove the author knew every
+shape the service emits.
