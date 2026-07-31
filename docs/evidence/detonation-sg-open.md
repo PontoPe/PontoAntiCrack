@@ -91,9 +91,10 @@ security group        deleted with the technique's Terraform
 ## Why this is the evidence that matters
 
 The repository's claim is that a detection is only real once it has been proven
-by attacking the account. Before this run every gate was green: 176 unit tests,
-a pattern gate agreeing with EventBridge on every fixture, and fixtures
-captured from real CloudTrail events.
+by attacking the account. Every gate was green throughout: 174 unit tests at the
+first detonation and 176 at the second, a pattern gate agreeing with EventBridge
+on every fixture, and fourteen of fifteen fixtures captured from real CloudTrail
+events.
 
 All of it was consistent with a detection that does not fire on the attack it
 was written for.
