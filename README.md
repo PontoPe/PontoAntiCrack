@@ -4,11 +4,13 @@ Anti-cheat for cloud accounts. Same idea as VAC: the game keeps running, the che
 
 Detection-as-code and automated remediation for AWS: CloudTrail → EventBridge → Lambda, with detections written as tested code and validated by running real attack techniques against the account.
 
-> **Status: written, tested locally, never applied.** Three detections, their
-> remediations, the Terraform, and the attack scenarios all exist and pass CI.
-> Nothing has been deployed to AWS, no technique has been detonated, and every
-> event fixture is derived from AWS documentation rather than from an observed
-> event. What that does and does not prove is spelled out in
+> **Status: deployed to an isolated lab account, detonated, and measured.**
+> Three detections with their remediations, wired to the organization CloudTrail
+> through EventBridge. `sg-open` was executed with Stratus Red Team: live
+> remediation closed a world-open SSH rule **5.97 seconds** after the attacker's
+> API call. Fifteen of seventeen event fixtures are captured from real events,
+> and the two that are not say so. `s3-public` and `iam-key-leak` have not been
+> detonated, so no latency is claimed for them. Details in
 > [What is actually proven](#what-is-actually-proven).
 >
 > Picking this up cold? Start at **[docs/PAChandoff.md](docs/PAChandoff.md)**.
