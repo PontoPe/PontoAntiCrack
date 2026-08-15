@@ -337,13 +337,25 @@ a day). Your ceiling is USD 20/month, shared with AwLZ.
 | X-Ray | active tracing | ~USD 0.00 (100k traces free) |
 | **Total** | | **≈ USD 2.35/month** |
 
+**Measured 2026-08-04 against the first closed billing window: USD 1.40/month.**
+The estimate above is retained rather than corrected in place, because the delta
+is the evidence. KMS and Secrets Manager matched to the cent. The nine alarms
+billed **zero** — they fall inside CloudWatch's 10-alarm free tier, which this
+table did not apply. So "77% of it is three flat charges" is wrong in a specific
+way: it is two flat charges, and the third is free until an eleventh alarm
+exists. Method and the org-wide numbers are in
+[AwLZ/docs/cost.md](../../AwLZ/docs/cost.md).
+
 Notes on the shape of that number:
 
-- **77% of it is three flat charges** — the CMK, the alarms, and the secret.
-  They cost the same whether the system sees one event or ten thousand.
-- **The alarms are the easiest cut.** Dropping the `throttles` alarm saves
-  USD 0.30/month and loses the earliest signal that the concurrency cap is being
-  hit. Not worth it; noted in case the budget tightens.
+- **Two flat charges are effectively the whole bill** — the CMK and the secret,
+  USD 1.40, identical whether the system sees one event or ten thousand.
+  *Corrected 2026-08-04:* this said three charges and counted the alarms.
+- **The alarms are not a cut, they are a cliff.** Dropping the `throttles` alarm
+  saves nothing, because nine alarms fall inside CloudWatch's 10-alarm free
+  tier. What matters is the other direction: a fourth detection adds three
+  alarms, crosses ten, and starts billing every alarm above the tier. The next
+  detection carries a cost this table would not have predicted.
 - **What could actually surprise you:** an event storm. Lambda and DynamoDB are
   per-request, and the circuit breaker limits *remediations*, not *invocations*.
   A million-event storm is roughly USD 0.20 of Lambda and USD 1.25 of DynamoDB

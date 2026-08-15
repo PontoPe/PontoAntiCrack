@@ -178,11 +178,33 @@ docs/                  # architecture ADRs, threat model, MITRE mapping, session
 
 ## Cost
 
-~USD 2.35/month at rest, against a USD 20/month ceiling shared with
-[AwLZ](../AwLZ). Nine CloudWatch alarms (USD 0.90), one KMS CMK (USD 1.00), and
-one Secrets Manager secret (USD 0.40) are effectively all of it — Lambda,
-EventBridge, DynamoDB on-demand, SQS, and X-Ray are free at this volume.
-Breakdown in [docs/session-report.md](docs/session-report.md).
+**Measured USD 1.40/month at rest** (August 2026 run rate, `awlz-lab`), against a
+USD 20/month ceiling shared with [AwLZ](../AwLZ). The estimate was USD 2.35.
+
+| Line | Estimated | Actual |
+|---|---:|---:|
+| KMS CMK — `alias/pac` | 1.00 | **1.00** |
+| Secrets Manager — `pac/slack-webhook` | 0.40 | **0.40** |
+| CloudWatch — 9 alarms | 0.90 | **0.00** |
+| Logs, DynamoDB, Lambda, EventBridge, SQS, X-Ray | ~0.05 | ~0.00 |
+| **Total** | **2.35** | **1.40** |
+
+The two flat charges matched to the cent. The alarms did not bill at all:
+**nine alarms sit inside CloudWatch's 10-alarm free tier, which the estimate
+did not apply.** That makes the tenth alarm free and the eleventh a cliff — the
+per-alarm cost is zero right up until it is USD 0.10 each, and adding one more
+detection means three more alarms. Same effect confirmed independently in
+AwLZ's management account, where the single break-glass alarm also billed zero.
+
+Cross-checked against the first closed billing window on 2026-08-04; see
+[AwLZ/docs/cost.md](../AwLZ/docs/cost.md) for the method, including the Cost
+Explorer grouping that hides credits. Estimate breakdown retained in
+[docs/session-report.md](docs/session-report.md).
+
+**This footprint is deployed and running.** What was released in July was the
+Lambda concurrency quota request, not the account — `awlz-lab` still holds the
+CMK, the secret and the three `pac-*` functions in `dry_run=true`. Anything
+saying the lab "was released" means the quota effort.
 
 ## Demo
 

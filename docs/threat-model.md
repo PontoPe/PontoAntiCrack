@@ -7,10 +7,17 @@ The detection and response pipeline itself: CloudTrail / GuardDuty → EventBrid
 here — threats it detects, and threats *against it*. The second is the one
 people forget.
 
-**Status:** the controls below are implemented and unit-tested. None has been
-validated by detonation. Where a control's effectiveness depends on an
-assumption about AWS event shapes, that assumption is currently unconfirmed —
-see R4 and [session-report.md](session-report.md).
+**Status:** the controls below are implemented, unit-tested, and — as of
+2026-07-30 — exercised by detonation in the lab account, which found two
+defects that every green gate had missed (R4 and R9). Remediation was measured
+end to end at 5.97 s. Two of the three techniques remain undetonated and are
+named as such in §Validation.
+
+**Program-level threats** — anything crossing into [AwLZ](../../AwLZ) or the
+rest of the stack — live in
+[TrustStack/docs/threat-model.md](../../TrustStack/docs/threat-model.md). R3's
+control depends on an SCP authored in another repository; that coupling is X5
+there.
 
 ## Assets
 
@@ -79,9 +86,23 @@ real event**, and the technique has been detonated in the lab account with the
 alert and the remediation asserted, and time-to-remediate recorded in
 `docs/evidence/`.
 
-By that standard, **no detection in this repository is done.** All three pass
-unit tests against documentation-derived fixtures. `docs/evidence/` is empty and
-stays empty until something is actually measured.
+By that standard, **one detection of three is done.**
+
+| Detection | Fixtures | Detonated | Remediation measured |
+|---|---|---|---|
+| `sg-open` | captured | **yes**, 2026-07-30 | **5.97 s**, `docs/evidence/time-to-remediate.md` |
+| `s3-public` | captured | no | no latency claimed |
+| `iam-key-leak` | captured | no | no latency claimed |
+
+`docs/evidence/` stayed empty for the entire build and now holds five artefacts,
+none of them written before the thing it describes was measured. The two
+undetonated techniques still have no numbers against them, and the lab is free —
+that gap is a choice about time, not a blocker.
+
+The detonation is also the reason two entries above read the way they do.
+**R4 and R9 were both found by detonating, with 176 tests green and every gate
+passing.** Whatever this table says about a control that has only been unit
+tested should be read in that light.
 
 ## Assumptions
 
