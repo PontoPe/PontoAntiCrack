@@ -1,6 +1,6 @@
 # PAC live validation progress
 
-Updated: 2026-07-30, after B1 completion and notifier remediation
+Updated: 2026-08-15, after a 16-day live-remediation observation window
 
 ## Current step
 
@@ -30,6 +30,24 @@ Updated: 2026-07-30, after B1 completion and notifier remediation
   visible in the repository. Any account other than the lab starts at
   `dry_run = true` and stays there until a week of real traffic has been
   reviewed — step 10 of the handoff order.
+
+## Live observation — 2026-08-15
+
+The lab has run with `dry_run = false` since 2026-07-31. Sixteen days later the
+audit table holds **the same ten records** it held at the end of that session:
+one `SKIPPED`, one `DRY_RUN`, four `APPLIED`, four `BLOCKED`. Nothing after
+`2026-07-31T00:08:56Z`.
+
+That is the intended result and it is worth stating as evidence rather than
+silence: **zero remediations and zero false positives in sixteen days of live
+operation** against an account that is otherwise idle. It is not a
+false-positive *rate* — an idle account generates no traffic to be wrong about,
+and step 10 of the handoff order still calls for a week of real traffic before
+this is read as one.
+
+The five GuardDuty sample findings created on 2026-07-30 never reached a
+detection: they predate the EventBridge targets by roughly an hour. They were
+archived on 2026-08-15.
 
 ## Commands attempted
 
