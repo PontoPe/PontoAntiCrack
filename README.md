@@ -71,7 +71,7 @@ Full mapping and the deliberate gaps: [docs/mitre-attack.md](docs/mitre-attack.m
 
 This matters more than the table above, so it gets its own section.
 
-**Proven:** 167 unit tests. The patterns match the events their author intended
+**Proven:** 185 unit tests. The patterns match the events their author intended
 and reject the plausible-but-benign near-miss. The handlers make the right
 call on a `moto`-backed AWS: a wildcard bucket policy scoped by
 `aws:PrincipalOrgID` is left alone, 443-to-the-world is left alone, a rule
@@ -79,8 +79,6 @@ allowing both `10.0.0.0/8` and `0.0.0.0/0` on port 22 loses only the second, a
 root credential finding is escalated and never acted on. The pipeline invariants
 hold: the snapshot survives a failed remediation, dry-run changes nothing, the
 circuit breaker stops a storm, an alert never carries credential material.
-
-![Detection and remediation, replayed from the recorded lab run](docs/img/demo.gif)
 
 **Proven since 2026-07-30:**
 
@@ -101,11 +99,12 @@ circuit breaker stops a storm, an alert never carries credential material.
   attacker using the legacy parameter form was invisible.
 
 - **EventBridge itself agrees with every pattern on every fixture.** `make
-  patterns` replays all fifteen through `aws events test-event-pattern`;
-  `docs/evidence/pattern-gate.md`. That closes the ADR-010 limitation: the local
-  reimplementation in `tests/support/eventbridge.py` and the service return the
-  same verdict on all fifteen.
-- **Fourteen of the fifteen fixtures are recorded events**, captured in the lab
+  patterns` replays all seventeen through `aws events test-event-pattern`:
+  seventeen agreements, zero disagreements; `docs/evidence/pattern-gate.md`.
+  That closes the ADR-010 limitation: the local reimplementation in
+  `tests/support/eventbridge.py` and the service return the same verdict on
+  every one.
+- **Fifteen of the seventeen fixtures are recorded events**, captured in the lab
   account from real API calls and sanitized;
   `docs/evidence/fixture-capture.md`. The assumption flagged as highest-risk
   held: CloudTrail emits `DeleteBucketPublicAccessBlock`, not the API's
@@ -122,12 +121,23 @@ circuit breaker stops a storm, an alert never carries credential material.
 - **The captured GuardDuty findings are service-generated samples.** Their type,
   severity and resource shape are exactly what GuardDuty emits, which is what
   the pattern reads, but no real compromise produced them.
-- **No technique has been detonated and no remediation has run against a real
-  resource.** The three Lambdas exist but are not wired to EventBridge: the
-  account's regional Lambda concurrency quota is 10, and three functions
-  reserving 5 each plus the 10 unreserved executions AWS enforces needs 25. A
-  request for the self-service minimum of 1000 is open. Until it lands, no
-  latency has been measured and `docs/evidence/` says so.
+- **Only one of the three techniques has been detonated.** `sg-open` was, and
+  the 5.97 s above is its number. `s3-public` and `iam-key-leak` are wired,
+  deployed and unit-tested, but no remediation of theirs has run against a real
+  resource, so no latency is claimed for them and `docs/evidence/` carries no
+  number for them.
+- **The Slack path has never delivered an alert.** No webhook value exists in
+  the lab's secret, so the notifier is unit-tested and never proven end to end.
+  An absent secret is recorded as an undelivered alert rather than a failed
+  remediation, and the audit record — not the chat message — is the system of
+  record.
+- **The false-positive rate is unknown.** Sixteen days of live operation in the
+  lab produced zero new audit records, but an idle account generates no traffic
+  to be wrong about. A week of real traffic under `dry_run = true` is what
+  would settle it — step 10 of the handoff order.
+- **There is no dead-man's-switch heartbeat** (threat R3). The existing alarms
+  catch a *failing* detection; a *deleted* rule emits no metric at all, so
+  nothing fires. This is the largest open gap.
 
 The capture procedure for each fixture, and the order to apply and verify in, is
 in [docs/session-report.md](docs/session-report.md).
@@ -142,7 +152,7 @@ is or is not a real finding: [docs/threat-model.md](docs/threat-model.md).
 | R1 | Remediation Lambda over-privileged → escalation path | One role per detection, plus explicit `Deny` on the escalation primitives. `sg-open` cannot `Authorize*` anything; `iam-key-leak` cannot `CreateAccessKey` or `PassRole`; `s3-public` cannot read an object |
 | R2 | Attacker triggers remediation as a DoS | Dry-run default, `pac:exclude` tag, per-detection circuit breaker **and** reserved concurrency, surgical revokes |
 | R3 | Attacker disables the detection path | SCP on `pac-*`, DynamoDB deletion protection, alarms on errors / throttles / dead letters. **No heartbeat canary yet — the largest open gap** |
-| R4 | Event schema drift → silent stop | Fixture tests + a coverage guard that requires a negative assertion. **Weakened until the fixtures are real** |
+| R4 | Event schema drift → silent stop | Fixture tests on captured events, a coverage guard that requires a negative assertion, and `make patterns` replaying every fixture through EventBridge itself. **This threat was realised and caught by detonating, not by any of those** — see the threat model |
 | R5 | Slack webhook leaked | Secrets Manager under a CMK, referenced by ARN, never in an env var or state; payloads scrubbed |
 | R6 | Remediation destroys IR evidence | Snapshot before any change; no TTL on audit records; `dynamodb:DeleteItem` and `iam:DeleteAccessKey` denied by IAM |
 | R7 | Alert fatigue | Conditional-write dedup with an exact window; benign outcomes do not alert |
@@ -171,7 +181,7 @@ remediations/<pkg>/    # handler.py, policy.json, README.md per detection
 remediations/common/   # the pipeline: snapshot, breaker, dry-run, redaction
 infra/                 # Terraform: rules, functions, per-detection roles, audit table
 notifier/              # Slack formatting with context, deduplicated
-attack-sim/            # Stratus scenarios + assertions (written, never run)
+attack-sim/            # Stratus scenarios + assertions (sg-open run; the other two written)
 tests/                 # fixtures + unit tests + the local pattern evaluator
 docs/                  # architecture ADRs, threat model, MITRE mapping, session report
 ```
@@ -202,14 +212,18 @@ Explorer grouping that hides credits. Estimate breakdown retained in
 [docs/session-report.md](docs/session-report.md).
 
 **This footprint is deployed and running.** What was released in July was the
-Lambda concurrency quota request, not the account — `awlz-lab` still holds the
-CMK, the secret and the three `pac-*` functions in `dry_run=true`. Anything
-saying the lab "was released" means the quota effort.
+Lambda concurrency quota request, not the account — `awlz-lab` holds the CMK,
+the secret, the three `pac-*` functions and their EventBridge targets, and has
+run with `dry_run = false` since 2026-07-31. That is the state the 5.97 s was
+measured in. Anything saying the lab "was released" means the quota effort.
 
 ## Demo
 
-<!-- GIF: stratus detonates → Slack alert with context → resource remediated, timer visible.
-     Not recorded: nothing has been detonated yet. -->
+![Detection and remediation, replayed from the recorded lab run](docs/img/demo.gif)
+
+Recorded from the lab run of 2026-07-30: Stratus detonates, the Slack alert
+arrives with context, the rule is revoked, and the timer is visible. The
+terminal capture it was rendered from is `docs/img/demo.cast`.
 
 ## Roadmap
 
@@ -219,12 +233,14 @@ saying the lab "was released" means the quota effort.
 - [x] `sg-open` detection + remediation + tests
 - [x] Slack notifier with context + dedup
 - [x] Dry-run mode, tag-based exclusions, circuit breaker
-- [x] Stratus Red Team scenarios wired to assertions (written, not run)
+- [x] Stratus Red Team scenarios wired to assertions (`sg-open` run four times)
 - [x] MITRE ATT&CK mapping table
-- [ ] **Apply to the lab account**
-- [ ] **Capture real CloudTrail events and replace every fixture**
-- [ ] Detonate each technique and assert
-- [ ] Time-to-remediate measurements per detection
+- [x] Apply to the lab account — deployed and wired to EventBridge
+- [x] Capture real CloudTrail events and replace the fixtures — fifteen of
+      seventeen; the two that stayed documentation-derived say why
+- [x] Demo GIF
+- [ ] Detonate `s3-public` and `iam-key-leak` and assert
+- [ ] Time-to-remediate for those two — only `sg-open` is measured
+- [ ] False-positive review after a week of real traffic
 - [ ] Dead-man's-switch heartbeat (threat R3)
 - [ ] `ModifySecurityGroupRules` rule for `sg-open`
-- [ ] Demo GIF
