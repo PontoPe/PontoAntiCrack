@@ -17,11 +17,14 @@ Named after VAC — anti-cheat for cloud accounts. The game keeps running; the c
 
 This is the repo that moves the owner from "sysadmin who knows security" to "security engineer". The differentiator is not that detections exist — it is that they have **unit tests on recorded CloudTrail events** and were **proven by attacking the account**, with time-to-remediate measured.
 
-Owner: Pedro (GitHub `PontoPe`). Repo: `github.com/PontoPe/PontoAntiCrack`, private until there is real content.
+Owner: Pedro (GitHub `PontoPe`). Repo: `github.com/PontoPe/PontoAntiCrack`, **public** since 2026-08 — the history was scrubbed of the lab account ID before it was published, so keep account IDs out of anything committed here.
 
-## Where things stand (2026-07-29)
+## Where things stand (2026-08-15)
 
-**Written and locally validated. Never applied. Nothing detonated.**
+**Deployed to `awlz-lab`, wired to EventBridge, detonated, measured, public.**
+`sg-open` revoked a world-open SSH rule **5.97 s** after the attacker's API
+call. The lab has run with `dry_run = false` since 2026-07-31. Blow-by-blow in
+`docs/PROGRESS.md`; the cold-start orientation is `docs/PAChandoff.md`.
 
 Done:
 
@@ -29,20 +32,23 @@ Done:
 - `detections/` — three EventBridge patterns + ATT&CK and provenance metadata.
 - `remediations/` — three handlers, three scoped IAM policies (allow **and** deny), three READMEs, plus `common/` which enforces the pipeline order.
 - `notifier/` — Slack payload with blast-radius context, conditional-write dedup, credential redaction.
-- `tests/` — 167 tests. Per detection: pattern matches, pattern does *not* match the benign near-miss, handler acts correctly. Plus pipeline invariants and tests for the local pattern evaluator.
-- `attack-sim/` — three Stratus scenarios, `assert.sh`, `measure.sh`. Written, **not run**.
-- `docs/` — 15 ADRs in `architecture.md`, threat model with a suppression register, MITRE mapping with deliberate gaps, and **`docs/session-report.md`, which is the thing to read before doing anything with AWS**.
+- `tests/` — 185 tests. Per detection: pattern matches, pattern does *not* match the benign near-miss, handler acts correctly. Plus pipeline invariants and tests for the local pattern evaluator.
+- `attack-sim/` — three Stratus scenarios, `assert.sh`, `measure.sh`. `sg-open` run four times (dry run, live, breaker); the other two written, **not run**.
+- `docs/` — 15 ADRs in `architecture.md`, threat model with a suppression register, MITRE mapping with deliberate gaps, and **`docs/session-report.md`, which is the thing to read before doing anything with AWS** (written 2026-07-29, before the apply — its state tables are that day's, its procedures still current).
+- `docs/evidence/` — four artefacts: pattern gate (17 agreements, zero disagreements), fixture capture, the `sg-open` detonation, time-to-remediate.
+- Applied: the three Lambdas and their EventBridge targets exist in `awlz-lab`. The concurrency quota `L-B99A9384` that blocked the wiring was raised to 1000.
+- Fifteen of the seventeen fixtures are recorded events from the lab.
 
 Not done:
 
-- Nothing applied. `terraform plan` has never run.
-- **Every fixture is derived from AWS documentation, not from an observed event.** Marked in three places and enforced by `tests/test_fixture_provenance.py`.
+- **`s3-public` and `iam-key-leak` have never been detonated.** They are deployed and unit-tested, but no remediation of theirs has run against a real resource, so no latency is claimed for them.
+- **Two fixtures are still documentation-derived** — the GuardDuty root-credential finding and the `sg-open` legacy-encoding benign case. Both marked, both explained in `tests/fixtures/README.md`, enforced by `tests/test_fixture_provenance.py`.
+- **The false-positive rate is unknown.** Sixteen days live produced no new audit records, but an idle account generates no traffic to be wrong about. `docs/evidence/false-positive-review.md` is the outstanding artefact.
 - No dead-man's-switch heartbeat (threat R3) — the largest gap in the threat model.
 - No `ModifySecurityGroupRules` rule; `sg-open` has a documented blind spot.
 - No T1098 detection (backdoor users / extra access keys) — largest coverage gap.
-- `docs/evidence/` empty, correctly.
 
-Next: everything is in section 4 of `docs/session-report.md`. Short version — `make build`, plan, apply with `dry_run = true`, then immediately `aws events test-event-pattern` for all three patterns. A `false` there means the detection is dead regardless of the unit tests.
+Next: the open items above, in the order `docs/PAChandoff.md` §4 gives them — the false-positive review is the one that gates letting this act outside the lab. Any *new* apply still follows section 4 of `docs/session-report.md`, and any account other than the lab starts at `dry_run = true` and stays there until a week of real traffic has been reviewed.
 
 ## Decisions already made — do not relitigate
 

@@ -1,20 +1,28 @@
 # Session report — 2026-07-29
 
-> Orientation and current state live in [PAChandoff.md](PAChandoff.md). This document
-> is the operational detail behind it: what to capture, in what order to apply,
-> and what it costs.
+> **This is a dated record of the 2026-07-29 session, not current state.** Every
+> count and status below is that day's, before anything was applied. The stack
+> has since been deployed to `awlz-lab`, wired to EventBridge, and `sg-open` was
+> detonated: current state is [PAChandoff.md](PAChandoff.md) and
+> [PROGRESS.md](PROGRESS.md).
+>
+> What stays useful here, and is why the file is kept: the apply order in §4,
+> the fixture capture procedure in §3, the cost breakdown in §5, and the
+> unverified assumptions in §6 — the procedures still hold for any account after
+> the lab.
 
 Written in one autonomous session with no AWS access. Everything below was
 validated locally: `pytest`, `ruff`, `ruff format`, `mypy --strict`,
 `terraform fmt`, `terraform validate`, `tflint`, `trivy config`, `checkov`,
 `shellcheck`. No AWS API call was made, including `sts get-caller-identity`.
 
-**Nothing has been applied. `terraform plan` has never been run** — it needs
-credentials. The `apply` is yours.
+**At the time of writing, nothing had been applied and `terraform plan` had
+never been run** — it needed credentials. It has been applied since; see the
+banner above.
 
 ---
 
-## 1. What is ready to apply
+## 1. What was ready to apply, as of 2026-07-29
 
 | Area | State |
 |---|---|
@@ -22,13 +30,13 @@ credentials. The `apply` is yours.
 | `detections/` | Three EventBridge patterns plus ATT&CK/provenance metadata. |
 | `remediations/` | Three handlers, three scoped IAM policies, three READMEs, and the shared pipeline that enforces snapshot-before-change, tag exclusion, circuit breaker, and dry-run. |
 | `notifier/` | Slack payload builder with blast-radius context, conditional-write deduplication, credential redaction. |
-| `tests/` | 167 tests. Per detection: the pattern matches, the pattern does *not* match the plausible-but-benign case, and the handler takes the right action. Plus pipeline invariants, redaction, config, and tests for the pattern evaluator itself. |
+| `tests/` | 167 tests **on that date** (185 now). Per detection: the pattern matches, the pattern does *not* match the plausible-but-benign case, and the handler takes the right action. Plus pipeline invariants, redaction, config, and tests for the pattern evaluator itself. |
 | `attack-sim/` | Three Stratus scenarios, `assert.sh`, `measure.sh`. Written, executable, **not run**. |
 | `scripts/` | `build-lambda.sh` (stages the deployment package), `check-detection-coverage.sh` (CI gate). |
 | `docs/` | 15 ADRs, updated threat model with a suppression register, MITRE mapping including deliberate gaps. |
-| `docs/evidence/` | **Empty, correctly.** Nothing has been measured. |
+| `docs/evidence/` | **Empty at the time, correctly.** Nothing had been measured. It now holds four artefacts. |
 
-Verification output at the end of the session:
+Verification output at the end of that session:
 
 ```
 167 passed
