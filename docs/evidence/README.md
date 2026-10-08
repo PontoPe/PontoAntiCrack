@@ -6,8 +6,8 @@ Committed on purpose — the proof is the deliverable.
 
 **Four artifacts, and the claim on the README is now true.**
 
-`pattern-gate.md` records EventBridge agreeing with all fifteen fixtures, which
-closes the limitation ADR-010 documents. `fixture-capture.md` records the
+`pattern-gate.md` records EventBridge agreeing with all seventeen fixtures,
+which closes the limitation ADR-010 documents. `fixture-capture.md` records the
 fixtures becoming real events rather than documentation, and the five places
 where real events disagreed with the hand-written ones.
 `detonation-sg-open.md` and `time-to-remediate.md` record the technique being
@@ -18,7 +18,7 @@ One technique has been detonated and one remediation has run against a real
 resource. `s3-public` and `iam-key-leak` have not been detonated, so their
 latency is unmeasured and no number for them appears here.
 
-What will land here, and what produces it:
+What is here, what produced it, and the one file still outstanding:
 
 | File | Produced by | Claim it backs |
 |---|---|---|

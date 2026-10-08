@@ -1,6 +1,6 @@
 # Handoff — PontoAntiCrack
 
-Written 2026-07-29, current as of **2026-07-30**. Entry point for anyone — or
+Written 2026-07-29, current as of **2026-08-15**. Entry point for anyone — or
 any session — picking this up cold.
 
 If you read one other file after this one, read
@@ -175,27 +175,32 @@ the Lambda concurrency quota that currently blocks the wiring. Run it first.
 Condensed from [session-report.md](session-report.md) §4, which has the
 verification detail for each step.
 
-Steps 0 through 3 and step 6 are **done** as of 2026-07-30 and are kept here so
-the order still reads straight. The next open step is 4.
+Steps 0 through 9 are **done** in `awlz-lab` as of 2026-07-31, except step 4 —
+no Slack webhook exists, so alert delivery has never been exercised. They are
+kept here so the order still reads straight — and because they are the order any *other*
+account has to follow. Step 10 is the next open one, and the `s3-public` and
+`iam-key-leak` detonations sit alongside it.
 
 | # | Step | State | Stop if |
 |---|---|---|---|
 | 0 | [AwLZ](../../AwLZ) applied through `modules/logging`; org trail delivering, GuardDuty on in the lab account | ✅ | It isn't — this repo consumes that trail |
 | 1 | `make build` | ✅ | `build/lambda/` is missing `remediations/` or `notifier/` |
-| 2 | `terraform plan` with `dry_run = true`, then apply | ⚠️ partial — three Lambdas exist, no EventBridge target does | The plan shows fewer than 3 IAM roles, or `PAC_DRY_RUN` is not `"true"`, or a `secret_string` appears on the secret |
-| 3 | `make patterns` — all three patterns against all fifteen fixtures | ✅ 15/15 | **Any positive fixture returns `false`, or any `benign-*` returns `true`** |
-| 6 | Capture the real events, replace the fixtures, flip the provenance markers, `make test` | ✅ 14 of 15 | — |
-| — | **Lambda concurrency quota reaches 25** | ⏳ request for 1000 open as a support case | Service Quotas refuses; it will not accept a value below the formal default |
-| 4 | `aws secretsmanager put-secret-value` for the webhook | open | `terraform show \| grep hooks.slack` returns anything |
-| 5 | Trigger one benign event; confirm invocation, Slack alert, `DRY_RUN` audit item with a full snapshot, **and that the resource is unchanged** | open | The resource changed. Dry-run means dry-run |
-| 7 | Detonate with `dry_run` still true | open | — |
-| 8 | `dry_run = false`, **lab only**, re-detonate, `make timing` | open | — |
-| 9 | Deliberately trip the circuit breaker and watch it hold | open | It doesn't. A control never observed working is a comment |
-| 10 | Consider dev/prod — with `dry_run = true` for a week of real traffic first | open | The false-positive rate is unknown |
+| 2 | `terraform plan` with `dry_run = true`, then apply | ✅ three Lambdas, three EventBridge rules with targets | The plan shows fewer than 3 IAM roles, or `PAC_DRY_RUN` is not `"true"`, or a `secret_string` appears on the secret |
+| 3 | `make patterns` — all three patterns against every fixture | ✅ 17/17 | **Any positive fixture returns `false`, or any `benign-*` returns `true`** |
+| 6 | Capture the real events, replace the fixtures, flip the provenance markers, `make test` | ✅ 15 of 17; the two exceptions are explained in `tests/fixtures/README.md` | — |
+| — | **Lambda concurrency quota** | ✅ applied at 1000 — Service Quotas refuses any request below the formal default, so 25 was never requestable | — |
+| 4 | `aws secretsmanager put-secret-value` for the webhook | **open** — no webhook exists; an absent secret is recorded as an undelivered alert, not a failed remediation | `terraform show \| grep hooks.slack` returns anything |
+| 5 | Trigger one benign event; confirm invocation, `DRY_RUN` audit item with a full snapshot, **and that the resource is unchanged** | ✅ resource unchanged. The Slack half is untested — see step 4 | The resource changed. Dry-run means dry-run |
+| 7 | Detonate with `dry_run` still true | ✅ `sg-open`; same plan, same snapshot, port still open afterwards | — |
+| 8 | `dry_run = false`, **lab only**, re-detonate, `make timing` | ✅ `sg-open` — 5.97 s, port 443 left alone | — |
+| 9 | Deliberately trip the circuit breaker and watch it hold | ✅ five actions, then four `BLOCKED` and four ports deliberately left open | It doesn't. A control never observed working is a comment |
+| 10 | Consider dev/prod — with `dry_run = true` for a week of real traffic first | open | The false-positive rate is unknown. Sixteen idle days in the lab is not a rate |
+| — | Detonate `s3-public` and `iam-key-leak` | open | — |
 
 **Do not go past step 5 into step 8 without doing step 6.** Turning on
 remediation while the patterns are unconfirmed means a system that might not
-fire, or might fire on the wrong resource, holding write access to AWS.
+fire, or might fire on the wrong resource, holding write access to AWS. That
+applies to every account after the lab, in that order.
 
 ### Two safety notes worth repeating out of the table
 
@@ -209,7 +214,8 @@ Isolated lab account only.
 **Stratus leaves resources behind.** Run `stratus status` after every session.
 A forgotten `t3.micro` in `sa-east-1` is ~USD 9/month, against a USD 20/month
 ceiling shared with AwLZ. That is the realistic way to blow the budget — not
-this stack, which costs ~USD 2.35/month at rest.
+this stack, which measured USD 1.40/month at rest in the first closed billing
+window.
 
 ---
 
@@ -222,10 +228,10 @@ remediations/<pkg>/         handler.py + policy.json + README.md, one per detect
 notifier/                   Slack payload, dedup, redaction
 infra/                      root stack; infra/modules/detection is the unit of isolation
 tests/support/eventbridge.py  local pattern evaluator — a reimplementation (ADR-010)
-tests/fixtures/             15 fixtures, every one carrying a _pac_fixture marker
-attack-sim/                 scenarios.yaml, assert.sh, measure.sh — written, never run
+tests/fixtures/             17 fixtures, every one carrying a _pac_fixture marker
+attack-sim/                 scenarios.yaml, assert.sh, measure.sh — sg-open run; the other two written
 scripts/                    build-lambda.sh, check-detection-coverage.sh
-docs/evidence/              empty, and that is correct
+docs/evidence/              pattern gate, fixture capture, detonation, time-to-remediate
 ```
 
 ### The one design decision to understand before changing anything
