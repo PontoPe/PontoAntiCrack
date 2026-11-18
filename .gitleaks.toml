@@ -1,0 +1,14 @@
+title = "PAC secret scanning — default rules with one exact dummy fixture"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "slack-webhook-url"
+
+[[rules.allowlists]]
+description = "Historical all-zero/all-X mock webhook; not a live Slack credential"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^tests/notifier/test_slack\.py$''']
+regexes = ['''^https://hooks\.slack\.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX$''']

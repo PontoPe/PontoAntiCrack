@@ -44,6 +44,17 @@ An independent read-only reviewer inspected the implementation and reran the
 No concrete blocker was reported within the dedicated unattached lab-SG boundary.
 This review is not deployment approval or proof of service IAM enforcement.
 
+## Secret-scan regression found by CI
+
+The first PR run passed Terraform analysis but its full-tree Gitleaks gate
+flagged the historical all-zero/all-X Slack webhook in
+`tests/notifier/test_slack.py:17`. It is a mock, not an exposed credential.
+`.gitleaks.toml` retains all default rules and exempts only that exact match
+AND that exact test path, for the Slack rule only. Full-history scanning then
+passed (43 commits). A negative control with a different mock team identifier
+still failed with exit 1; the rule was not disabled or broadly path-excluded.
+CI must be rerun on the amended head; the initial failure is not hidden.
+
 ## Live boundary — blocked, not passed
 
 Official CLI STS on the available lab-named profile still identifies the

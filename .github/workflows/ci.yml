@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Gitleaks scans history, not just the PR merge tree.
       - uses: actions/setup-python@v5
         with:
           # Matches the Lambda runtime in infra/modules/detection/main.tf.
