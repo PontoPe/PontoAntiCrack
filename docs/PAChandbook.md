@@ -131,10 +131,11 @@ it, so the map cannot drift away from what is deployed.
 - It never calls the audit log, the circuit breaker, or the notifier.
   `remediations/common/runtime.py` does, in a fixed order. A handler that
   reaches for them is a handler that can get the order wrong.
-- `apply()` must be able to run from the snapshot alone. `sg-open` stores
-  `ip_permissions_revoked` in the exact shape the API takes back; `apply()` just
-  posts it. This is what makes the audit record a genuine rollback source rather
-  than a log line.
+- `apply()` uses only snapshotted targets to determine mutation scope, then
+  re-reads the resource to intersect that scope with current state. `sg-open`
+  stores `ip_permissions_revoked` in the API shape, never widens the plan, and
+  verifies those targets are absent after revoke. The snapshot is forensic
+  evidence, **not authorization for automatic rollback**.
 
 ---
 

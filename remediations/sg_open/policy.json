@@ -14,7 +14,11 @@
       "Sid": "RevokeWorldOpenIngress",
       "Effect": "Allow",
       "Action": ["ec2:RevokeSecurityGroupIngress"],
-      "Resource": "arn:${partition}:ec2:${region}:${account_id}:security-group/*"
+      "Resource": "arn:${partition}:ec2:${region}:${account_id}:security-group/${scope_group}",
+      "Condition": {
+        "StringEquals": {"ec2:ResourceTag/pac:canary": "${scope_round}"},
+        "Null": {"ec2:ResourceTag/pac:exclude": "true"}
+      }
     },
     {
       "Sid": "NeverWidenAccessOrDestroyGroups",

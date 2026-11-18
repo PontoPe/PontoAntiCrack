@@ -31,18 +31,22 @@ module "detection" {
   detection_policy = templatefile(
     "${path.module}/../remediations/${each.value.package}/policy.json",
     {
-      partition  = local.partition
-      account_id = var.account_id
-      region     = var.region
+      partition   = local.partition
+      account_id  = var.account_id
+      region      = var.region
+      scope_group = local.sg_scope_group
+      scope_round = var.canary_round
     },
   )
 
-  name_prefix = local.name_prefix
-  environment = var.environment
-  dry_run     = var.dry_run
-  region      = var.region
-  account_id  = var.account_id
-  partition   = local.partition
+  name_prefix    = local.name_prefix
+  environment    = var.environment
+  dry_run        = var.dry_run
+  region         = var.region
+  account_id     = var.account_id
+  partition      = local.partition
+  sg_scope_group = local.sg_scope_group
+  sg_scope_round = var.canary_round
 
   lambda_zip_path      = data.archive_file.lambda.output_path
   lambda_source_hash   = data.archive_file.lambda.output_base64sha256

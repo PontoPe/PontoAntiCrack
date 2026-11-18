@@ -1,0 +1,4 @@
+#!/bin/sh
+# Fail closed if gitleaks is missing; scan only the staged diff, never env/cache.
+set -eu
+exec gitleaks git --pre-commit --staged --redact --no-banner .

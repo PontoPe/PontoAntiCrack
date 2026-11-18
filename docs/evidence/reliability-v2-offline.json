@@ -1,0 +1,375 @@
+{
+  "scope": "offline A0/A1 only; no AWS or external writes",
+  "baseline_sha": "6338628d422e0c443362ce65e44b3a67f8706061",
+  "finished_at": "2026-11-17T18:28:07.081631+00:00",
+  "environment": "clean subprocess environment; no inherited PYTHONPATH or AWS/BC credentials",
+  "results": [
+    {
+      "label": "baseline original suite",
+      "command": [
+        "/home/pontope/Coding/PontoAntiCrack/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/",
+        "--ignore=tests/remediations/test_replay_concurrency.py",
+        "-q"
+      ],
+      "cwd": "/home/pontope/.hermes/cache/scratch/pac-baseline-64i05l3a",
+      "started_at": "2026-11-17T18:27:41.057201+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "........................................................................ [ 38%]\n........................................................................ [ 77%]\n.........................................                                [100%]\n185 passed in 4.95s\n",
+      "stderr": ""
+    },
+    {
+      "label": "baseline defect tests (expected RED)",
+      "command": [
+        "/home/pontope/Coding/PontoAntiCrack/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/remediations/test_replay_concurrency.py",
+        "-q",
+        "--tb=short",
+        "-k",
+        "repeated_dry_run or two_inflight or competitor_removes or success_response"
+      ],
+      "cwd": "/home/pontope/.hermes/cache/scratch/pac-baseline-64i05l3a",
+      "started_at": "2026-11-17T18:27:47.167348+00:00",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "stdout": "FFFF                                                                     [100%]\n=================================== FAILURES ===================================\n____________ test_repeated_dry_run_preserves_each_delivery_snapshot ____________\ntests/remediations/test_replay_concurrency.py:65: in test_repeated_dry_run_preserves_each_delivery_snapshot\n    assert len(items) == 2, \"a replay must not overwrite the original pre-change evidence\"\nE   AssertionError: a replay must not overwrite the original pre-change evidence\nE   assert 1 == 2\nE    +  where 1 = len([{'account_id': '111111111111', 'actions': ['revoke ingress tcp/22-22 from 0.0.0.0/0 from sg-e9e2d3e3d5742d432'], 'bla...: 0, \"sensitive_ports\": \"22\", \"vpc_id\": \"vpc-64df7d8c451f6d22c\"}', 'completed_at': '2026-11-17T18:27:48.026387Z', ...}])\n____________ test_two_inflight_plans_converge_without_false_failure ____________\ntests/remediations/test_replay_concurrency.py:80: in test_two_inflight_plans_converge_without_false_failure\n    assert detection.apply(second, aws) == [], \"the competing delivery already removed the target\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nremediations/sg_open/handler.py:153: in apply\n    aws.ec2.revoke_security_group_ingress(\n../../../../Coding/PontoAntiCrack/.venv/lib/python3.13/site-packages/botocore/client.py:606: in _api_call\n    return self._make_api_call(operation_name, kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../../../Coding/PontoAntiCrack/.venv/lib/python3.13/site-packages/botocore/context.py:123: in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n../../../../Coding/PontoAntiCrack/.venv/lib/python3.13/site-packages/botocore/client.py:1094: in _make_api_call\n    raise error_class(parsed_response, operation_name)\nE   botocore.exceptions.ClientError: An error occurred (InvalidPermission.NotFound) when calling the RevokeSecurityGroupIngress operation: The specified rule does not exist in this security group\n____________ test_competitor_removes_target_between_read_and_revoke ____________\ntests/remediations/test_replay_concurrency.py:99: in test_competitor_removes_target_between_read_and_revoke\n    assert outcome.status is Status.APPLIED\nE   AssertionError: assert <Status.FAILED: 'FAILED'> is <Status.APPLIED: 'APPLIED'>\nE    +  where <Status.FAILED: 'FAILED'> = Outcome(detection_id='sg-open', status=<Status.FAILED: 'FAILED'>, severity=<Severity.CRITICAL: 'critical'>, resource_i...ound) when calling the RevokeSecurityGroupIngress operation: The specified rule does not exist in this security group').status\nE    +  and   <Status.APPLIED: 'APPLIED'> = Status.APPLIED\n------------------------------ Captured log call -------------------------------\nERROR    pac:runtime.py:164 remediation failed\nTraceback (most recent call last):\n  File \"/home/pontope/.hermes/cache/scratch/pac-baseline-64i05l3a/remediations/common/runtime.py\", line 151, in execute\n    actions = detection.apply(plan, aws)\n  File \"/home/pontope/.hermes/cache/scratch/pac-baseline-64i05l3a/remediations/sg_open/handler.py\", line 153, in apply\n    aws.ec2.revoke_security_group_ingress(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        GroupId=plan.resource_id, IpPermissions=list(revocations)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/home/pontope/.hermes/cache/scratch/pac-baseline-64i05l3a/tests/remediations/test_replay_concurrency.py\", line 95, in competing_revoke\n    return revoke(**kwargs)  # Real moto EC2 raises InvalidPermission.NotFound.\n  File \"/home/pontope/Coding/PontoAntiCrack/.venv/lib/python3.13/site-packages/botocore/client.py\", line 606, in _api_call\n    return self._make_api_call(operation_name, kwargs)\n           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/pontope/Coding/PontoAntiCrack/.venv/lib/python3.13/site-packages/botocore/context.py\", line 123, in wrapper\n    return func(*args, **kwargs)\n  File \"/home/pontope/Coding/PontoAntiCrack/.venv/lib/python3.13/site-packages/botocore/client.py\", line 1094, in _make_api_call\n    raise error_class(parsed_response, operation_name)\nbotocore.exceptions.ClientError: An error occurred (InvalidPermission.NotFound) when calling the RevokeSecurityGroupIngress operation: The specified rule does not exist in this security group\n_____________ test_success_response_without_effect_is_not_applied ______________\ntests/remediations/test_replay_concurrency.py:113: in test_success_response_without_effect_is_not_applied\n    assert outcome.status is Status.FAILED\nE   AssertionError: assert <Status.APPLIED: 'APPLIED'> is <Status.FAILED: 'FAILED'>\nE    +  where <Status.APPLIED: 'APPLIED'> = Outcome(detection_id='sg-open', status=<Status.APPLIED: 'APPLIED'>, severity=<Severity.HIGH: 'high'>, resource_id='sg-... from the internet on 22', actions=('revoked ingress tcp/22-22 from 0.0.0.0/0 from sg-a85995c55b082d818',), error=None).status\nE    +  and   <Status.FAILED: 'FAILED'> = Status.FAILED\n=========================== short test summary info ============================\nFAILED tests/remediations/test_replay_concurrency.py::test_repeated_dry_run_preserves_each_delivery_snapshot\nFAILED tests/remediations/test_replay_concurrency.py::test_two_inflight_plans_converge_without_false_failure\nFAILED tests/remediations/test_replay_concurrency.py::test_competitor_removes_target_between_read_and_revoke\nFAILED tests/remediations/test_replay_concurrency.py::test_success_response_without_effect_is_not_applied\n4 failed, 8 deselected in 1.49s\n",
+      "stderr": ""
+    },
+    {
+      "label": "current focused suite",
+      "command": [
+        "/home/pontope/Coding/PontoAntiCrack/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/remediations/test_replay_concurrency.py",
+        "-q"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:27:49.562617+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "............                                                             [100%]\n12 passed in 3.53s\n",
+      "stderr": ""
+    },
+    {
+      "label": "current full suite",
+      "command": [
+        "/home/pontope/Coding/PontoAntiCrack/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/",
+        "-q"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:27:54.223523+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "........................................................................ [ 36%]\n........................................................................ [ 73%]\n.....................................................                    [100%]\n197 passed in 8.30s\n",
+      "stderr": ""
+    },
+    {
+      "label": "ruff lint",
+      "command": [
+        "/home/pontope/Coding/PontoAntiCrack/.venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.110029+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    {
+      "label": "ruff formatting",
+      "command": [
+        "/home/pontope/Coding/PontoAntiCrack/.venv/bin/python",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "."
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.135807+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "67 files already formatted\n",
+      "stderr": ""
+    },
+    {
+      "label": "mypy strict",
+      "command": [
+        "/home/pontope/Coding/PontoAntiCrack/.venv/bin/python",
+        "-m",
+        "mypy",
+        "remediations/",
+        "notifier/"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.165516+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "Success: no issues found in 22 source files\n",
+      "stderr": ""
+    },
+    {
+      "label": "build and detection coverage",
+      "command": [
+        "make",
+        "build",
+        "coverage"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.239916+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "./scripts/build-lambda.sh\nstaged /home/pontope/Coding/PontoAntiCrack/build/lambda (22 files)\n./scripts/check-detection-coverage.sh\ndetection iam-key-leak\ndetection s3-public\ndetection sg-open\n\nall detections complete\n",
+      "stderr": ""
+    },
+    {
+      "label": "bash syntax attack-sim/assert.sh",
+      "command": [
+        "bash",
+        "-n",
+        "attack-sim/assert.sh"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.297073+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "bash syntax attack-sim/measure.sh",
+      "command": [
+        "bash",
+        "-n",
+        "attack-sim/measure.sh"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.298009+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "bash syntax scripts/build-lambda.sh",
+      "command": [
+        "bash",
+        "-n",
+        "scripts/build-lambda.sh"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.298772+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "bash syntax scripts/check-detection-coverage.sh",
+      "command": [
+        "bash",
+        "-n",
+        "scripts/check-detection-coverage.sh"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.299443+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "bash syntax scripts/demo-record.sh",
+      "command": [
+        "bash",
+        "-n",
+        "scripts/demo-record.sh"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.300243+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "bash syntax scripts/demo.sh",
+      "command": [
+        "bash",
+        "-n",
+        "scripts/demo.sh"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.301001+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "bash syntax scripts/verify-patterns.sh",
+      "command": [
+        "bash",
+        "-n",
+        "scripts/verify-patterns.sh"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:04.301664+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "trivy cached offline IaC",
+      "command": [
+        "trivy",
+        "config",
+        "infra",
+        "--severity",
+        "HIGH,CRITICAL",
+        "--exit-code",
+        "1",
+        "--skip-check-update",
+        "--skip-version-check",
+        "--disable-telemetry"
+      ],
+      "cwd": "/home/pontope/.hermes/cache/scratch/pac-baseline-64i05l3a",
+      "started_at": "2026-11-17T18:28:04.302439+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "\nReport Summary\n\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Target \u2502   Type    \u2502 Misconfigurations \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 .      \u2502 terraform \u2502         0         \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nLegend:\n- '-': Not scanned\n- '0': Clean (no security findings detected)\n\n",
+      "stderr": "2026-11-17T15:28:04-03:00\tINFO\t[misconfig] Misconfiguration scanning is enabled\n2026-11-17T15:28:04-03:00\tINFO\t[checks-client] No downloadable checks were loaded as --skip-check-update is enabled, loading from existing cache...\n2026-11-17T15:28:04-03:00\tINFO\t[terraform scanner] Scanning root module\tfile_path=\".\"\n2026-11-17T15:28:04-03:00\tWARN\t[terraform parser] Variable values were not found in the environment or variable files. Evaluating may not work correctly.\tmodule=\"root\" variables=\"account_id, environment\"\n2026-11-17T15:28:04-03:00\tINFO\tDetected config files\tnum=1\n"
+    },
+    {
+      "label": "checkov offline IaC",
+      "command": [
+        "/home/pontope/Coding/PontoAntiCrack/.venv/bin/python",
+        "-m",
+        "checkov.main",
+        "-d",
+        "infra",
+        "--framework",
+        "terraform",
+        "--quiet",
+        "--compact",
+        "--skip-download",
+        "--skip-results-upload",
+        "--download-external-modules",
+        "false"
+      ],
+      "cwd": "/home/pontope/.hermes/cache/scratch/pac-baseline-64i05l3a",
+      "started_at": "2026-11-17T18:28:04.862498+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "terraform scan results:\n\nPassed checks: 76, Failed checks: 0, Skipped checks: 6\n\n\n",
+      "stderr": ""
+    },
+    {
+      "label": "git whitespace",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:06.476396+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "trivy version",
+      "command": [
+        "trivy",
+        "--version"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:06.479240+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "Version: 0.73.0\nVulnerability DB:\n  Version: 2\n  UpdatedAt: 2026-11-14 19:00:12.815668408 +0000 UTC\n  NextUpdate: 2026-11-15 19:00:12.815668137 +0000 UTC\n  DownloadedAt: 2026-11-14 19:49:39.685989532 +0000 UTC\nCheck Bundle:\n  Digest: sha256:1583562f8b90ed2a071b99f0e5ffff6b57e4ceb6ca3e4796577b4e6a339eb74c\n  DownloadedAt: 2026-10-01 17:10:01.338707448 +0000 UTC\n",
+      "stderr": ""
+    },
+    {
+      "label": "gitleaks version",
+      "command": [
+        "gitleaks",
+        "version"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:06.518543+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "8.30.1\n",
+      "stderr": ""
+    },
+    {
+      "label": "project dependency versions",
+      "command": [
+        "/home/pontope/Coding/PontoAntiCrack/.venv/bin/python",
+        "-c",
+        "import sys,importlib.metadata as m,json; print(json.dumps({'python':sys.version,'packages':{n:m.version(n) for n in ['pytest','boto3','botocore','moto','ruff','mypy','checkov']}}))"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:06.716106+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "{\"python\": \"3.13.15 (main, Aug  7 2026, 02:25:50) [Clang 22.1.3 ]\", \"packages\": {\"pytest\": \"8.4.2\", \"boto3\": \"1.44.4\", \"botocore\": \"1.44.4\", \"moto\": \"5.2.5\", \"ruff\": \"0.17.5\", \"mypy\": \"1.20.2\", \"checkov\": \"3.2.459\"}}\n",
+      "stderr": ""
+    },
+    {
+      "label": "gitleaks changed source/docs stdin",
+      "command": [
+        "gitleaks",
+        "stdin",
+        "--redact",
+        "--no-banner",
+        "--no-color"
+      ],
+      "cwd": "/home/pontope/Coding/PontoAntiCrack",
+      "started_at": "2026-11-17T18:28:06.756569+00:00",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "stdout": "",
+      "stderr": "3:28PM INF scanned ~113547 bytes (113.55 KB) in 128ms\n3:28PM INF no leaks found\n"
+    }
+  ],
+  "gitleaks_input_files": [
+    "AGENTS.md",
+    "README.md",
+    "docs/PAChandbook.md",
+    "docs/PAChandoff.md",
+    "docs/evidence/reliability-v2.md",
+    "remediations/common/audit.py",
+    "remediations/sg_open/README.md",
+    "remediations/sg_open/handler.py",
+    "tests/remediations/test_replay_concurrency.py"
+  ],
+  "artifact": {
+    "files": 22,
+    "exact_source_bytes": true,
+    "python_files_only": true,
+    "no_caches": true
+  },
+  "infra_matches_baseline": true,
+  "missing_tools": [
+    "terraform",
+    "tflint",
+    "shellcheck"
+  ]
+}
