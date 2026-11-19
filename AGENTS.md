@@ -19,12 +19,17 @@ This is the repo that moves the owner from "sysadmin who knows security" to "sec
 
 Owner: Pedro (GitHub `PontoPe`). Repo: `github.com/PontoPe/PontoAntiCrack`, **public** since 2026-08 — the history was scrubbed of the lab account ID before it was published, so keep account IDs out of anything committed here.
 
-## Where things stand (2026-08-15)
+## Where things stand
 
-**Deployed to `awlz-lab`, wired to EventBridge, detonated, measured, public.**
-`sg-open` revoked a world-open SSH rule **5.97 s** after the attacker's API
-call. The lab has run with `dry_run = false` since 2026-07-31. Blow-by-blow in
-`docs/PROGRESS.md`; the cold-start orientation is `docs/PAChandoff.md`.
+**2026-11-17:** local, uncommitted replay/concurrency/failure-safety increment;
+see `docs/evidence/reliability-v2.md`. No AWS calls or deployments in this work.
+The July `sg-open` detonation is historical evidence, not current verification.
+`docs/PAChandoff.md` and the reliability report supersede the scaffold inventory
+below, which is retained as historical context only.
+
+### Historical scaffold inventory (2026-07-29)
+
+**The following describes the pre-deployment scaffold, not current state.**
 
 Done:
 

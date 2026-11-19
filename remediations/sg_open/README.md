@@ -45,9 +45,19 @@ and loses the second. Revoking the whole permission entry would take down
 legitimate internal access — that is exactly the shape of threat R2, an outage
 caused by our own remediation rather than by the attacker.
 
-The complete prior `IpPermissions` list is written to the audit table in the
-exact structure `AuthorizeSecurityGroupIngress` accepts, so restoring is a copy
-of that field back into the API.
+The complete prior `IpPermissions` list is written to the audit table before
+mutation. Each delivery has its own UUID-suffixed audit sort key; event ID/time
+are retained for correlation, not used as a delivery-deduplication key.
+
+Before revoking, `apply()` re-reads the group and intersects current dangerous
+CIDRs with the snapshotted targets. It never expands to new findings without a
+new snapshot. If another delivery removes the targets between read and revoke,
+`InvalidPermission.NotFound` is treated as convergence **only after another
+read confirms every planned target is absent**. Other API errors still fail.
+After a successful revoke, another read verifies target absence before
+`APPLIED`; an empty action list means this delivery observed convergence,
+not that it performed a revoke. See
+[offline evidence and limitations](../../docs/evidence/reliability-v2.md).
 
 ## Execution role
 
@@ -63,7 +73,16 @@ The `Deny` blocks every action that could *widen* access: no `Authorize*`, no
 `ModifyNetworkInterfaceAttribute`. The role can close ports. That is all it can
 do.
 
-## Rollback
+## Manual recovery — not automatic rollback
+
+**Do not reopen internet access just because a snapshot exists.** First inspect
+the current group and correlate all audit deliveries by `event_id`,
+`resource_id`, and time. A `PLANNED` record may mean the revoke succeeded but
+its audit close failed. Replay checks current state; it never reopens access
+and does not automatically relabel that unresolved record as successful.
+Preserve that item and record any human reconciliation separately.
+
+Only after explicit review/authorization of a safe desired rule set:
 
 ```
 aws ec2 authorize-security-group-ingress --group-id <sg> --ip-permissions file://<snapshot>.json

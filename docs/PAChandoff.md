@@ -8,6 +8,24 @@ If you read one other file after this one, read
 
 ---
 
+## Current offline increment (2026-11-17)
+
+Baseline `6338628d422e0c443362ce65e44b3a67f8706061`: 185 tests passed locally.
+Replay/failure-safety was first verified at 197 cases; the canary/guardrail
+extension is still **not deployed**. See [canary-offline.md](evidence/canary-offline.md)
+for current gates and [runbook](runbooks/canary.md) for the breaking exact-SG
+entrypoint/IAM migration. STS identified the available profile as management,
+not lab; no cloud mutations were performed. Existing state/inventory, lab
+session, reviewed plan and live acceptance remain prerequisites.
+The earlier report below describes the A0/A1 stage, before canary implementation.
+The replay/failure-safety increment is **local and uncommitted**, not deployed.
+See [reliability-v2.md](evidence/reliability-v2.md) for executed gates,
+limitations, and the remaining AWS acceptance checklist. No current AWS state
+was queried. July's detonation and 5.97 s are historical evidence, not a result
+for this increment. The July sections below are historical and contain stale
+intermediate-state tables; this notice and the linked report take precedence
+for the offline increment.
+
 ## 1. In sixty seconds
 
 Detection-as-code for AWS. Three detections, each one a unit: an EventBridge
@@ -144,9 +162,11 @@ plainly rather than implied.
 2. **The captured GuardDuty findings are service-generated samples.** Type,
    severity and resource shape are exactly what the service emits — which is
    what the pattern reads — but no real compromise produced them.
-3. **Nothing has been detonated.** No latency measured, no false-positive rate
-   observed, no remediation has touched a real resource. This is blocked on the
-   Lambda concurrency quota, not on work.
+3. **The replay/failure-safety increment has not been validated on AWS.**
+   July's `sg-open` detonation is recorded in `evidence/detonation-sg-open.md`;
+   the earlier "nothing detonated / quota blocked" statement was superseded.
+   `s3-public` and `iam-key-leak` remain undetonated. Current deployment state
+   was not inspected during the offline increment.
 
 ### The three assumptions that are load-bearing
 

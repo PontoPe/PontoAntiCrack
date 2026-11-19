@@ -13,6 +13,14 @@ Detection-as-code and automated remediation for AWS: CloudTrail → EventBridge 
 > detonated, so no latency is claimed for them. Details in
 > [What is actually proven](#what-is-actually-proven).
 >
+> **Offline update (2026-11-17):** the status above records the July lab run,
+> not current deployment health. Replay/concurrency/failure-safety changes are
+> locally tested only; see [reliability-v2](docs/evidence/reliability-v2.md).
+> Scoped canary/observer implementation and static gates are also offline-only:
+> [canary evidence](docs/evidence/canary-offline.md),
+> [breaking migration/runbook](docs/runbooks/canary.md),
+> [technical case](docs/reliability-case.md). No new AWS result is claimed.
+>
 > Picking this up cold? Start at **[docs/PAChandoff.md](docs/PAChandoff.md)**.
 
 ---
@@ -71,7 +79,8 @@ Full mapping and the deliberate gaps: [docs/mitre-attack.md](docs/mitre-attack.m
 
 This matters more than the table above, so it gets its own section.
 
-**Proven:** 185 unit tests. The patterns match the events their author intended
+**Proven offline (2026-11-17):** 197 unit tests (185 at the recorded baseline).
+The patterns match the events their author intended
 and reject the plausible-but-benign near-miss. The handlers make the right
 call on a `moto`-backed AWS: a wildcard bucket policy scoped by
 `aws:PrincipalOrgID` is left alone, 443-to-the-world is left alone, a rule
@@ -121,23 +130,11 @@ circuit breaker stops a storm, an alert never carries credential material.
 - **The captured GuardDuty findings are service-generated samples.** Their type,
   severity and resource shape are exactly what GuardDuty emits, which is what
   the pattern reads, but no real compromise produced them.
-- **Only one of the three techniques has been detonated.** `sg-open` was, and
-  the 5.97 s above is its number. `s3-public` and `iam-key-leak` are wired,
-  deployed and unit-tested, but no remediation of theirs has run against a real
-  resource, so no latency is claimed for them and `docs/evidence/` carries no
-  number for them.
-- **The Slack path has never delivered an alert.** No webhook value exists in
-  the lab's secret, so the notifier is unit-tested and never proven end to end.
-  An absent secret is recorded as an undelivered alert rather than a failed
-  remediation, and the audit record — not the chat message — is the system of
-  record.
-- **The false-positive rate is unknown.** Sixteen days of live operation in the
-  lab produced zero new audit records, but an idle account generates no traffic
-  to be wrong about. A week of real traffic under `dry_run = true` is what
-  would settle it — step 10 of the handoff order.
-- **There is no dead-man's-switch heartbeat** (threat R3). The existing alarms
-  catch a *failing* detection; a *deleted* rule emits no metric at all, so
-  nothing fires. This is the largest open gap.
+- **The new reliability increment has no AWS acceptance yet.** July's
+  `sg-open` detonation remains valid historical evidence; it does not prove
+  these later replay/concurrency changes, current account health, or the two
+  undetonated detections. Canary, alarm interruption/recovery, and scoped
+  cleanup are still open in [reliability-v2](docs/evidence/reliability-v2.md).
 
 The capture procedure for each fixture, and the order to apply and verify in, is
 in [docs/session-report.md](docs/session-report.md).

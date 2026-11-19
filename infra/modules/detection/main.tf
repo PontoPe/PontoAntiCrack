@@ -212,7 +212,7 @@ resource "aws_lambda_function" "detection" {
 
   filename         = var.lambda_zip_path
   source_code_hash = var.lambda_source_hash
-  handler          = "remediations.${var.package}.handler.lambda_handler"
+  handler          = var.detection_id == "sg-open" ? "remediations.sg_open.scope.lambda_handler" : "remediations.${var.package}.handler.lambda_handler"
   runtime          = "python3.13"
   architectures    = ["arm64"]
 
@@ -241,6 +241,10 @@ resource "aws_lambda_function" "detection" {
   environment {
     variables = {
       PAC_DETECTION_ID                   = var.detection_id
+      PAC_SCOPE_ACCOUNT                  = var.account_id
+      PAC_SCOPE_REGION                   = var.region
+      PAC_SCOPE_GROUP                    = var.sg_scope_group
+      PAC_SCOPE_ROUND                    = var.sg_scope_round
       PAC_TABLE_NAME                     = var.audit_table_name
       PAC_ENVIRONMENT                    = var.environment
       PAC_DRY_RUN                        = var.dry_run ? "true" : "false"
@@ -252,6 +256,16 @@ resource "aws_lambda_function" "detection" {
       # appears in GetFunctionConfiguration, in CloudTrail, or in the state file.
       PAC_SLACK_SECRET_ARN = var.slack_secret_arn
       PAC_LOG_LEVEL        = "INFO"
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition = var.detection_id != "sg-open" || (
+        var.environment == "lab" && var.region == "sa-east-1" &&
+        var.sg_scope_group != "" && var.sg_scope_round != ""
+      )
+      error_message = "sg-open now requires explicit exact-group lab scope; review migration before deployment."
     }
   }
 
