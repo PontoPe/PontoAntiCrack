@@ -13,6 +13,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 
+from botocore.exceptions import ClientError
+
 from remediations.common import events as event_parser
 from remediations.common.aws import AwsClients
 from remediations.common.detection import Detection
@@ -147,13 +149,60 @@ class SgOpen(Detection):
         )
 
     def apply(self, plan: Plan, aws: AwsClients) -> list[str]:
-        revocations = plan.snapshot.get("ip_permissions_revoked", [])
+        # Re-read: a competing delivery or operator may already have corrected
+        # this group. Intersect with the snapshotted targets, never widen them.
+        revocations = _remaining_revocations(plan, aws)
         if not revocations:
             return []
-        aws.ec2.revoke_security_group_ingress(
-            GroupId=plan.resource_id, IpPermissions=list(revocations)
-        )
+        try:
+            aws.ec2.revoke_security_group_ingress(
+                GroupId=plan.resource_id, IpPermissions=revocations
+            )
+        except ClientError as exc:
+            # The rule can disappear between the read and revoke. Only this
+            # error, and a confirming read, establish an already-converged plan.
+            if exc.response["Error"]["Code"] != "InvalidPermission.NotFound":
+                raise
+            if _remaining_revocations(plan, aws):
+                raise
+            return []
+        if _remaining_revocations(plan, aws):
+            raise RuntimeError(
+                "planned ingress targets remain after revoke; reconciliation required"
+            )
         return [f"revoked ingress {_render(rule)} from {plan.resource_id}" for rule in revocations]
+
+
+def _remaining_revocations(plan: Plan, aws: AwsClients) -> list[dict[str, Any]]:
+    planned = plan.snapshot.get("ip_permissions_revoked", [])
+    groups = aws.ec2.describe_security_groups(GroupIds=[plan.resource_id])["SecurityGroups"]
+    remaining = []
+    for current in groups[0].get("IpPermissions", []):
+        dangerous = _world_open_dangerous_part(current)
+        if dangerous is None:
+            continue
+        for target in planned:
+            if any(
+                current.get(key) != target.get(key) for key in ("IpProtocol", "FromPort", "ToPort")
+            ):
+                continue
+            rule = {
+                key: value
+                for key, value in dangerous.items()
+                if key not in {"IpRanges", "Ipv6Ranges"}
+            }
+            for family, cidr in (("IpRanges", "CidrIp"), ("Ipv6Ranges", "CidrIpv6")):
+                allowed = {entry[cidr] for entry in target.get(family, [])}
+                sources = [
+                    {cidr: entry[cidr]}
+                    for entry in dangerous.get(family, [])
+                    if entry[cidr] in allowed
+                ]
+                if sources:
+                    rule[family] = sources
+            if "IpRanges" in rule or "Ipv6Ranges" in rule:
+                remaining.append(rule)
+    return remaining
 
 
 def _world_open_dangerous_part(

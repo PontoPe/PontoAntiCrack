@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from typing import Any
+from uuid import uuid4
 
 from remediations.common import clock, redact
 from remediations.common.models import DetectionEvent, Outcome, Plan
@@ -26,7 +27,9 @@ def audit_key(
 ) -> dict[str, str]:
     return {
         "pk": f"{AUDIT_PREFIX}#{detection_id}#{resource_id}",
-        "sk": f"{event_time}#{event_id}",
+        # One item per delivery, not per event. Replays/concurrent invocations
+        # must never replace another invocation's snapshot or terminal status.
+        "sk": f"{event_time}#{event_id}#{uuid4().hex}",
     }
 
 
@@ -56,6 +59,7 @@ class AuditLog:
             "account_id": event.account_id,
             "region": event.region,
             "event_id": event.event_id,
+            "request_id": str(event.detail.get("requestID", "")),
             "event_time": event.event_time,
             "event_source": event.source,
             "principal_arn": event.principal.arn,

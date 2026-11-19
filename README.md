@@ -13,6 +13,14 @@ Detection-as-code and automated remediation for AWS: CloudTrail → EventBridge 
 > detonated, so no latency is claimed for them. Details in
 > [What is actually proven](#what-is-actually-proven).
 >
+> **Offline update (2026-11-17):** the status above records the July lab run,
+> not current deployment health. Replay/concurrency/failure-safety changes are
+> locally tested only; see [reliability-v2](docs/evidence/reliability-v2.md).
+> Scoped canary/observer implementation and static gates are also offline-only:
+> [canary evidence](docs/evidence/canary-offline.md),
+> [breaking migration/runbook](docs/runbooks/canary.md),
+> [technical case](docs/reliability-case.md). No new AWS result is claimed.
+>
 > Picking this up cold? Start at **[docs/PAChandoff.md](docs/PAChandoff.md)**.
 
 ---
@@ -71,7 +79,8 @@ Full mapping and the deliberate gaps: [docs/mitre-attack.md](docs/mitre-attack.m
 
 This matters more than the table above, so it gets its own section.
 
-**Proven:** 167 unit tests. The patterns match the events their author intended
+**Proven offline (2026-11-17):** 197 unit tests (185 at the recorded baseline).
+The patterns match the events their author intended
 and reject the plausible-but-benign near-miss. The handlers make the right
 call on a `moto`-backed AWS: a wildcard bucket policy scoped by
 `aws:PrincipalOrgID` is left alone, 443-to-the-world is left alone, a rule
@@ -122,12 +131,11 @@ circuit breaker stops a storm, an alert never carries credential material.
 - **The captured GuardDuty findings are service-generated samples.** Their type,
   severity and resource shape are exactly what GuardDuty emits, which is what
   the pattern reads, but no real compromise produced them.
-- **No technique has been detonated and no remediation has run against a real
-  resource.** The three Lambdas exist but are not wired to EventBridge: the
-  account's regional Lambda concurrency quota is 10, and three functions
-  reserving 5 each plus the 10 unreserved executions AWS enforces needs 25. A
-  request for the self-service minimum of 1000 is open. Until it lands, no
-  latency has been measured and `docs/evidence/` says so.
+- **The new reliability increment has no AWS acceptance yet.** July's
+  `sg-open` detonation remains valid historical evidence; it does not prove
+  these later replay/concurrency changes, current account health, or the two
+  undetonated detections. Canary, alarm interruption/recovery, and scoped
+  cleanup are still open in [reliability-v2](docs/evidence/reliability-v2.md).
 
 The capture procedure for each fixture, and the order to apply and verify in, is
 in [docs/session-report.md](docs/session-report.md).

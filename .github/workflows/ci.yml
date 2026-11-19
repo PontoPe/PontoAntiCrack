@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Gitleaks scans history, not just the PR merge tree.
       - uses: actions/setup-python@v5
         with:
           # Matches the Lambda runtime in infra/modules/detection/main.tf.
@@ -28,11 +30,23 @@ jobs:
 
       - run: pip install -r requirements-dev.txt
 
+      - name: staged-source secret scan tool
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          curl --fail --location --proto '=https' --tlsv1.2 \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            --output "$RUNNER_TEMP/gitleaks.tar.gz"
+          printf '%s  %s\n' "$GITLEAKS_SHA256" "$RUNNER_TEMP/gitleaks.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner .
+
       - name: lint
         run: |
           ruff check .
           ruff format --check .
-          mypy remediations/ notifier/
+          mypy remediations/ notifier/ canary/
 
       - name: unit tests — event patterns + remediation handlers
         run: pytest tests/ -v --tb=short
@@ -58,7 +72,7 @@ jobs:
           python-version: "3.13"
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.15.8"
+          terraform_version: "1.17.2"
 
       # archive_file needs the staged package to exist before plan/validate
       # touches the data source.

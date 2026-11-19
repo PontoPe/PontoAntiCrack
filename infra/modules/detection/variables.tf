@@ -1,3 +1,11 @@
+variable "sg_scope_group" {
+  type = string
+}
+
+variable "sg_scope_round" {
+  type = string
+}
+
 variable "detection_id" {
   description = "Kebab-case detection ID, e.g. s3-public. Used in every resource name."
   type        = string

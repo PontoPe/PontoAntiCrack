@@ -22,7 +22,7 @@ patterns: ## B2 gate — replay every fixture through EventBridge itself; needs 
 lint: ## ruff + mypy + terraform static analysis
 	ruff check .
 	ruff format --check .
-	mypy remediations/ notifier/
+	mypy remediations/ notifier/ canary/
 	$(TF) fmt -check -recursive
 	trivy config infra --severity HIGH,CRITICAL --exit-code 1
 	checkov -d infra --quiet --compact

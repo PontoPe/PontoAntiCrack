@@ -1,0 +1,82 @@
+{
+  "baseline_sha": "6338628d422e0c443362ce65e44b3a67f8706061",
+  "executed_at": "2026-11-18T00:16:44.864959+00:00",
+  "scope": "offline; no deployment, live event, alarm, cleanup or cost proof",
+  "results": [
+    {
+      "command": "python --version",
+      "exit_code": 0,
+      "output": "Python 3.13.15\n"
+    },
+    {
+      "command": "ruff --version; mypy --version; terraform version; tflint --version",
+      "exit_code": 0,
+      "output": "ruff 0.17.5\nmypy 1.20.2 (compiled: yes)\nTerraform v1.17.2\non linux_amd64\n\nTFLint version 0.66.0\n+ ruleset.terraform (0.17.0-bundled)\n"
+    },
+    {
+      "command": "pytest tests/ -q",
+      "exit_code": 0,
+      "output": "........................................................................ [ 30%]\n........................................................................ [ 60%]\n........................................................................ [ 90%]\n......................                                                   [100%]\n238 passed in 13.45s\n"
+    },
+    {
+      "command": "ruff check .",
+      "exit_code": 0,
+      "output": "All checks passed!\n"
+    },
+    {
+      "command": "ruff format --check .",
+      "exit_code": 0,
+      "output": "79 files already formatted\n"
+    },
+    {
+      "command": "mypy remediations/ notifier/ canary/",
+      "exit_code": 0,
+      "output": "Success: no issues found in 26 source files\n"
+    },
+    {
+      "command": "make build coverage",
+      "exit_code": 0,
+      "output": "./scripts/build-lambda.sh\nstaged /home/pontope/Coding/PontoAntiCrack/build/lambda (26 files)\n./scripts/check-detection-coverage.sh\ndetection iam-key-leak\ndetection s3-public\ndetection sg-open\n\nall detections complete\n"
+    },
+    {
+      "command": "shellcheck -x -S warning scripts/*.sh attack-sim/*.sh .githooks/pre-commit",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "command": "terraform -chdir=infra fmt -check -recursive",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "command": "terraform -chdir=infra init -backend=false -input=false",
+      "exit_code": 0,
+      "output": "\u001b[0m\u001b[1mInitializing modules...\u001b[0m\n\n\u001b[0m\u001b[1mInitializing provider plugins...\u001b[0m\n- Reusing version 6.57.1 of hashicorp/aws from the dependency lock file\n- Reusing version 2.8.0 of hashicorp/archive from the dependency lock file\n- Using previously-installed hashicorp/aws v6.57.1\n- Using previously-installed hashicorp/archive v2.8.0\n\n\u001b[0m\u001b[1m\u001b[32mTerraform has been successfully initialized!\u001b[0m\u001b[32m\u001b[0m\n\u001b[0m\u001b[32m\nYou may now begin working with Terraform. Try running \"terraform plan\" to see\nany changes that are required for your infrastructure. All Terraform commands\nshould now work.\n\nIf you ever set or change modules or backend configuration for Terraform,\nrerun this command to reinitialize your working directory. If you forget, other\ncommands will detect it and remind you to do so if necessary.\u001b[0m\n"
+    },
+    {
+      "command": "terraform -chdir=infra validate",
+      "exit_code": 0,
+      "output": "\u001b[32m\u001b[1mSuccess!\u001b[0m The configuration is valid.\n\u001b[0m\n"
+    },
+    {
+      "command": "tflint --chdir=infra --init && tflint --chdir=infra --recursive",
+      "exit_code": 0,
+      "output": "All plugins are already installed\n"
+    },
+    {
+      "command": "trivy config .tools/gates/infra --skip-check-update --skip-version-check --disable-telemetry --severity HIGH,CRITICAL --exit-code 1",
+      "exit_code": 0,
+      "output": "2026-11-17T21:16:42-03:00\tINFO\t[misconfig] Misconfiguration scanning is enabled\n2026-11-17T21:16:42-03:00\tINFO\t[checks-client] No downloadable checks were loaded as --skip-check-update is enabled, loading from existing cache...\n2026-11-17T21:16:42-03:00\tINFO\t[terraform scanner] Scanning root module\tfile_path=\".\"\n2026-11-17T21:16:42-03:00\tWARN\t[terraform parser] Variable values were not found in the environment or variable files. Evaluating may not work correctly.\tmodule=\"root\" variables=\"account_id, environment\"\n2026-11-17T21:16:42-03:00\tINFO\tDetected config files\tnum=1\n\nReport Summary\n\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Target \u2502   Type    \u2502 Misconfigurations \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 .      \u2502 terraform \u2502         0         \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nLegend:\n- '-': Not scanned\n- '0': Clean (no security findings detected)\n\n"
+    },
+    {
+      "command": "checkov -d .tools/gates/infra --quiet --compact --skip-download --skip-results-upload --download-external-modules false",
+      "exit_code": 0,
+      "output": "terraform scan results:\n\nPassed checks: 99, Failed checks: 0, Skipped checks: 9\n\n\n"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "output": ""
+    }
+  ]
+}

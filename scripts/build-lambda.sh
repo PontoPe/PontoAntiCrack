@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Stage the Lambda deployment package.
 #
-# One artifact for all three detections: remediations/ and notifier/, nothing
-# else. No third-party dependencies — everything the handlers use is either in
-# the standard library or is boto3 as shipped by the AWS Python runtime. That is
+# One artifact for the detections and opt-in canary: remediations/, notifier/,
+# and canary/, nothing else. No third-party dependencies — handlers use only
+# the standard library or boto3 as shipped by the AWS Python runtime. That is
 # a deliberate constraint, not an accident: a deployment package with no
 # vendored wheels has no supply chain to review before each deploy.
 #
@@ -17,7 +17,7 @@ build="${root}/build/lambda"
 rm -rf "${build}"
 mkdir -p "${build}"
 
-for package in remediations notifier; do
+for package in remediations notifier canary; do
   cp -r "${root}/${package}" "${build}/${package}"
 done
 

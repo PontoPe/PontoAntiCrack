@@ -30,7 +30,7 @@ python_version = "3.13"
 strict = true
 warn_unreachable = true
 disallow_any_generics = true
-files = ["remediations", "notifier"]
+files = ["remediations", "notifier", "canary"]
 
 # boto3 ships no type information in the runtime we deploy to, and pulling
 # boto3-stubs into CI to type-check code that runs against the runtime's own

@@ -16,3 +16,4 @@ tfplan
 
 # Staged by scripts/build-lambda.sh, zipped by Terraform. Derived, never edited.
 build/
+.tools/
