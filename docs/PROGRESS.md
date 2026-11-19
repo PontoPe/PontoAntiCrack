@@ -4,7 +4,10 @@ Updated: 2026-08-15, after a 16-day live-remediation observation window
 
 ## Current step
 
-**B1 through B7 are done. B8 — publication — is the only step left.**
+**B1 through B8 are done.** The repository is public (`github.com/PontoPe/PontoAntiCrack`,
+last push 2026-08-15) and every step of the live-validation plan has run. What
+remains is not part of this plan: detonating `s3-public` and `iam-key-leak`, the
+false-positive review after a week of real traffic, and the R3 heartbeat.
 
 - Quota `L-B99A9384` was requested at 1000, the lowest value Service Quotas
   accepts, and the applied value reached 1000. The deferred wiring then applied
@@ -49,7 +52,14 @@ The five GuardDuty sample findings created on 2026-07-30 never reached a
 detection: they predate the EventBridge targets by roughly an hour. They were
 archived on 2026-08-15.
 
-## Commands attempted
+## Session log — B1, the apply (2026-07-30)
+
+Everything from here to the CI section is the record of the apply session, kept
+as history. Where it disagrees with **Current step** above, the section above
+wins: the quota reached 1000, the recovery apply completed, the EventBridge
+targets exist, and `sg-open` was detonated afterwards.
+
+### Commands attempted
 
 - Read the autonomous-owner prompt and all required PAC handoff documents.
 - Reconfirmed `OrganizationAccountAccessRole` in account `<lab-account>`
@@ -96,7 +106,7 @@ archived on 2026-08-15.
   value found in the lab. Fixed the post-remediation failure mode in `d1c4ab0`
   and added coverage for unreadable and non-HTTPS secret values.
 
-## Observed
+### Observed
 
 - The SQS correction is legitimate: AWS provider `6.57.1` rejects configuring
   `kms_master_key_id` together with `sqs_managed_sse_enabled`, even when the
@@ -131,10 +141,11 @@ archived on 2026-08-15.
 - The ignored `infra/tfplan` is stale after the partial apply and is not an
   authorized recovery artifact.
 
-## Cleanup
+### Cleanup, at the end of that session
 
 - No attack resources were created.
-- No EventBridge targets are active.
+- No EventBridge targets were active **yet** — they were created by the recovery
+  apply after the quota landed.
 - `stratus status` is clean: all techniques are `COLD`.
 - The temporary AWS console session was signed out.
 
@@ -150,11 +161,16 @@ commit `e796ecf`.
 
 ## TODO
 
-1. Before B4, reconfirm the lab caller, the completed Terraform state and that
-   `PAC_DRY_RUN=true`; do not weaken `reserved_concurrency = 5`.
-2. Detonate the approved Stratus technique in dry-run mode and assert the audit
-   snapshot, Lambda invocation and unchanged resource. An absent Slack webhook
-   must be recorded as an undelivered alert, not treated as a failed remediation.
-3. Complete B5 and B6 only after B4: live lab remediation and timing, then a
-   deliberate circuit-breaker trip.
-4. Capture evidence and demo, then complete publication (B7–B8).
+B1 through B8 are done; the list below is what is left, and none of it is part
+of that plan.
+
+1. Detonate `s3-public` and `iam-key-leak` and assert, then measure their
+   time-to-remediate. Only `sg-open` has a number.
+2. Put a real value in the Slack webhook secret and prove alert delivery end to
+   end. An absent webhook is still recorded as an undelivered alert, not a
+   failed remediation, and the audit record remains the system of record.
+3. `docs/evidence/false-positive-review.md` — a week of real traffic under
+   `dry_run = true`, which is what gates letting this act outside the lab.
+4. Dead-man's-switch heartbeat (threat R3): a scheduled canary through each rule
+   plus an alarm with `treat_missing_data = "breaching"`. A deleted rule emits
+   no metric, so nothing fires today.

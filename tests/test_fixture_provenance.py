@@ -1,9 +1,9 @@
 """Provenance guard.
 
 This repository's claim is "detections are tested against recorded CloudTrail
-events". Right now that is not true — every fixture was written from AWS
-documentation. That is a fine starting point and a bad thing to forget, so the
-distinction is machine-checked rather than left to a paragraph in a README:
+events". Fifteen of the seventeen fixtures are; two are still written from AWS
+documentation and say so. Which is which is machine-checked rather than left to
+a paragraph in a README:
 
 * every fixture declares its provenance
 * a fixture cannot claim to be verified while its detection's metadata says the

@@ -89,8 +89,6 @@ root credential finding is escalated and never acted on. The pipeline invariants
 hold: the snapshot survives a failed remediation, dry-run changes nothing, the
 circuit breaker stops a storm, an alert never carries credential material.
 
-![Detection and remediation, replayed from the recorded lab run](docs/img/demo.gif)
-
 **Proven since 2026-07-30:**
 
 - **The technique was detonated and the remediation ran.** Stratus Red Team
@@ -110,11 +108,12 @@ circuit breaker stops a storm, an alert never carries credential material.
   attacker using the legacy parameter form was invisible.
 
 - **EventBridge itself agrees with every pattern on every fixture.** `make
-  patterns` replays all fifteen through `aws events test-event-pattern`;
-  `docs/evidence/pattern-gate.md`. That closes the ADR-010 limitation: the local
-  reimplementation in `tests/support/eventbridge.py` and the service return the
-  same verdict on all fifteen.
-- **Fourteen of the fifteen fixtures are recorded events**, captured in the lab
+  patterns` replays all seventeen through `aws events test-event-pattern`:
+  seventeen agreements, zero disagreements; `docs/evidence/pattern-gate.md`.
+  That closes the ADR-010 limitation: the local reimplementation in
+  `tests/support/eventbridge.py` and the service return the same verdict on
+  every one.
+- **Fifteen of the seventeen fixtures are recorded events**, captured in the lab
   account from real API calls and sanitized;
   `docs/evidence/fixture-capture.md`. The assumption flagged as highest-risk
   held: CloudTrail emits `DeleteBucketPublicAccessBlock`, not the API's
@@ -150,7 +149,7 @@ is or is not a real finding: [docs/threat-model.md](docs/threat-model.md).
 | R1 | Remediation Lambda over-privileged → escalation path | One role per detection, plus explicit `Deny` on the escalation primitives. `sg-open` cannot `Authorize*` anything; `iam-key-leak` cannot `CreateAccessKey` or `PassRole`; `s3-public` cannot read an object |
 | R2 | Attacker triggers remediation as a DoS | Dry-run default, `pac:exclude` tag, per-detection circuit breaker **and** reserved concurrency, surgical revokes |
 | R3 | Attacker disables the detection path | SCP on `pac-*`, DynamoDB deletion protection, alarms on errors / throttles / dead letters. **No heartbeat canary yet — the largest open gap** |
-| R4 | Event schema drift → silent stop | Fixture tests + a coverage guard that requires a negative assertion. **Weakened until the fixtures are real** |
+| R4 | Event schema drift → silent stop | Fixture tests on captured events, a coverage guard that requires a negative assertion, and `make patterns` replaying every fixture through EventBridge itself. **This threat was realised and caught by detonating, not by any of those** — see the threat model |
 | R5 | Slack webhook leaked | Secrets Manager under a CMK, referenced by ARN, never in an env var or state; payloads scrubbed |
 | R6 | Remediation destroys IR evidence | Snapshot before any change; no TTL on audit records; `dynamodb:DeleteItem` and `iam:DeleteAccessKey` denied by IAM |
 | R7 | Alert fatigue | Conditional-write dedup with an exact window; benign outcomes do not alert |
@@ -179,7 +178,7 @@ remediations/<pkg>/    # handler.py, policy.json, README.md per detection
 remediations/common/   # the pipeline: snapshot, breaker, dry-run, redaction
 infra/                 # Terraform: rules, functions, per-detection roles, audit table
 notifier/              # Slack formatting with context, deduplicated
-attack-sim/            # Stratus scenarios + assertions (written, never run)
+attack-sim/            # Stratus scenarios + assertions (sg-open run; the other two written)
 tests/                 # fixtures + unit tests + the local pattern evaluator
 docs/                  # architecture ADRs, threat model, MITRE mapping, session report
 ```
@@ -210,14 +209,18 @@ Explorer grouping that hides credits. Estimate breakdown retained in
 [docs/session-report.md](docs/session-report.md).
 
 **This footprint is deployed and running.** What was released in July was the
-Lambda concurrency quota request, not the account — `awlz-lab` still holds the
-CMK, the secret and the three `pac-*` functions in `dry_run=true`. Anything
-saying the lab "was released" means the quota effort.
+Lambda concurrency quota request, not the account — `awlz-lab` holds the CMK,
+the secret, the three `pac-*` functions and their EventBridge targets, and has
+run with `dry_run = false` since 2026-07-31. That is the state the 5.97 s was
+measured in. Anything saying the lab "was released" means the quota effort.
 
 ## Demo
 
-<!-- GIF: stratus detonates → Slack alert with context → resource remediated, timer visible.
-     Not recorded: nothing has been detonated yet. -->
+![Detection and remediation, replayed from the recorded lab run](docs/img/demo.gif)
+
+Recorded from the lab run of 2026-07-30: Stratus detonates, the Slack alert
+arrives with context, the rule is revoked, and the timer is visible. The
+terminal capture it was rendered from is `docs/img/demo.cast`.
 
 ## Roadmap
 
@@ -227,12 +230,14 @@ saying the lab "was released" means the quota effort.
 - [x] `sg-open` detection + remediation + tests
 - [x] Slack notifier with context + dedup
 - [x] Dry-run mode, tag-based exclusions, circuit breaker
-- [x] Stratus Red Team scenarios wired to assertions (written, not run)
+- [x] Stratus Red Team scenarios wired to assertions (`sg-open` run four times)
 - [x] MITRE ATT&CK mapping table
-- [ ] **Apply to the lab account**
-- [ ] **Capture real CloudTrail events and replace every fixture**
-- [ ] Detonate each technique and assert
-- [ ] Time-to-remediate measurements per detection
+- [x] Apply to the lab account — deployed and wired to EventBridge
+- [x] Capture real CloudTrail events and replace the fixtures — fifteen of
+      seventeen; the two that stayed documentation-derived say why
+- [x] Demo GIF
+- [ ] Detonate `s3-public` and `iam-key-leak` and assert
+- [ ] Time-to-remediate for those two — only `sg-open` is measured
+- [ ] False-positive review after a week of real traffic
 - [ ] Dead-man's-switch heartbeat (threat R3)
 - [ ] `ModifySecurityGroupRules` rule for `sg-open`
-- [ ] Demo GIF

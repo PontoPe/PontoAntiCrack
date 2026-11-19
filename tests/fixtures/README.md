@@ -1,22 +1,36 @@
 # Fixtures
 
-**Every fixture in this tree is derived from AWS documentation. None has been
-confirmed against an event this organisation actually produced.**
+**Fifteen of the seventeen fixtures here are events this organisation actually
+produced, captured in `awlz-lab` on 2026-07-30 and sanitized. Two are still
+derived from AWS documentation, and they say so in their own markers.**
 
-That is a legitimate starting point and a real limitation, and it is marked in
-three places so it cannot quietly stop being true:
+The two exceptions, and why they stayed:
 
-1. a `_pac_fixture` object inside every fixture file
-2. `fixture_verified_against_live_event: false` in each
-   `detections/*/metadata.yaml`
+- `guardduty/iam-key-leak/unauthorized-access-root-credentials.json` — GuardDuty
+  sample findings always carry a placeholder principal and none can be issued
+  against the account root. Capturing it honestly would mean manufacturing a
+  root compromise.
+- `cloudtrail/sg-open/benign-authorize-ingress-legacy-params-internal-cidr.json`
+  — the legacy top-level parameter encoding, added after the detonation exposed
+  it. The AWS CLI does not emit that form, so the benign counterpart could not
+  be produced the way the others were.
+
+Which fixture is which is marked in three places, so it cannot quietly stop
+being true:
+
+1. a `_pac_fixture` object inside every fixture file, per fixture
+2. `fixture_verified_against_live_event` in each `detections/*/metadata.yaml`,
+   `true` only when **every** fixture for that detection is verified — so
+   `sg-open` and `iam-key-leak` are still `false` on the strength of one
+   fixture each
 3. `tests/test_fixture_provenance.py`, which fails if a fixture is missing the
    marker or if a fixture claims to be verified while its detection metadata
    still says otherwise
 
-The claim this repository makes is "detections are tested against recorded
-CloudTrail events". Until the `_pac_fixture` markers say `"verified"`, the
-honest version is "tested against the documented event schema". The capture
-procedure for each one is in
+What changed when the fixtures stopped being guesses — including the five
+assumptions real events corrected — is in
+[docs/evidence/fixture-capture.md](../../docs/evidence/fixture-capture.md). The
+capture procedure for each one is in
 [docs/session-report.md](../../docs/session-report.md).
 
 ## Marker
